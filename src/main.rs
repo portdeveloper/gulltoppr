@@ -9,7 +9,8 @@ async fn generate_abi(contract_address: web::Path<String>) -> impl Responder {
     let output = Command::new("heimdall")
         .arg("decompile")
         .arg(&*contract_address)
-        .arg("-vvv")
+        .arg("--rpc-url")
+        .arg("https://eth.llamarpc.com")
         .output();
 
     match output {
@@ -53,7 +54,7 @@ async fn main() -> std::io::Result<()> {
             web::get().to(generate_abi),
         )
     })
-    .bind("127.0.0.1:8080")?
+    .bind("0.0.0.0:8080")?
     .run()
     .await
 }
