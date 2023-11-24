@@ -1,3 +1,4 @@
+use actix_cors::Cors;
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use log::{error, info};
 use std::fs;
@@ -48,11 +49,17 @@ async fn greet() -> impl Responder {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init();
+
     HttpServer::new(|| {
-        App::new().route("/", web::get().to(greet)).route(
-            "/generate-abi/{contract_address}",
-            web::get().to(generate_abi),
-        )
+        let cors = Cors::permissive();
+
+        App::new()
+            .wrap(cors)
+            .route("/", web::get().to(greet))
+            .route(
+                "/generate-abi/{contract_address}",
+                web::get().to(generate_abi),
+            )
     })
     .bind("0.0.0.0:8080")?
     .run()
