@@ -14,7 +14,7 @@ RUN cargo build --release
 FROM ubuntu:latest
 
 # Install any dependencies you might have
-RUN apt-get update && apt-get install -y libssl-dev pkg-config ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y libssl-dev pkg-config ca-certificates strace gdb && rm -rf /var/lib/apt/lists/*
 
 # Copy the build artifact from the build stage
 COPY --from=builder /usr/src/heimdall-api/target/release/heimdall_api .
