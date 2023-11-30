@@ -6,6 +6,11 @@ use std::process::Command;
 
 async fn generate_abi(contract_address: web::Path<String>) -> impl Responder {
     info!("Generating ABI for: {}", contract_address);
+    let command = format!(
+        "heimdall decompile {} --rpc-url https://eth.llamarpc.com",
+        contract_address
+    );
+    info!("Executing command: {}", command);
 
     let output = Command::new("heimdall")
         .arg("decompile")
@@ -16,21 +21,30 @@ async fn generate_abi(contract_address: web::Path<String>) -> impl Responder {
 
     match output {
         Ok(output) => {
+            info!(
+                "Command executed. Status: {}, Output: {:?}",
+                output.status,
+                String::from_utf8_lossy(&output.stdout)
+            );
             if output.status.success() {
                 info!("ABI generation successful");
                 let abi_path = format!("output/{}/abi.json", contract_address);
+                info!("Reading ABI from {}", abi_path);
 
                 match fs::read_to_string(&abi_path) {
                     Ok(abi_content) => HttpResponse::Ok()
                         .content_type("application/json")
                         .body(abi_content),
                     Err(e) => {
-                        error!("Failed to read ABI file: {:?}", e);
+                        error!("Failed to read ABI file at {}: {:?}", abi_path, e);
                         HttpResponse::InternalServerError().body("Failed to read ABI file")
                     }
                 }
             } else {
-                error!("Error during ABI generation: {:?}", output.stderr);
+                error!(
+                    "Error during ABI generation. Stderr: {:?}",
+                    String::from_utf8_lossy(&output.stderr)
+                );
                 HttpResponse::InternalServerError().body("Error generating ABI")
             }
         }
