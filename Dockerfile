@@ -1,32 +1,29 @@
-# Use the official Rust image as a base
 FROM rust:latest as builder
 
-# Create a working directory
 WORKDIR /usr/src/heimdall-api
 
-# Copy your source tree
 COPY ./ .
 
-# Build your application
 RUN cargo build --release
 
-# Now, start a new stage to create a lighter final image
 FROM ubuntu:latest
 
-# Install any dependencies you might have
-RUN apt-get update && apt-get install -y libssl-dev pkg-config ca-certificates strace gdb && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y libssl-dev pkg-config ca-certificates curl strace gdb git cargo && rm -rf /var/lib/apt/lists/*
 
-# Copy the build artifact from the build stage
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
+
+RUN curl -L http://get.heimdall.rs | bash 2>&1 | tee bifrost-install.log
+
+RUN find / -name bifrost -type f 2>/dev/null
+
+RUN /root/.bifrost/bin/bifrost -B 2>&1 | tee heimdall-install.log || echo "Bifrost execution failed"
+
+RUN cat bifrost-install.log && cat heimdall-install.log
+
+RUN which heimdall || echo "Heimdall not found"
+
 COPY --from=builder /usr/src/heimdall-api/target/release/heimdall_api .
 
-# Copy the Heimdall binary from the project directory
-COPY heimdall /usr/local/bin/heimdall
-
-# Ensure the binary is executable
-RUN chmod +x /usr/local/bin/heimdall
-
-# Expose the port the app runs on
 EXPOSE 8080
 
-# Run the binary
 CMD ["./heimdall_api"]
