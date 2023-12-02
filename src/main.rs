@@ -25,7 +25,7 @@ async fn generate_abi(contract_address: web::Path<String>) -> impl Responder {
 }
 
 fn execute_decompile(contract_address: &str) -> Result<(), std::io::Error> {
-    let output = Command::new("heimdall")
+    let output = Command::new("/root/.bifrost/bin/heimdall")
         .arg("decompile")
         .arg(contract_address)
         .arg("--rpc-url")
