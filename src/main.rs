@@ -28,7 +28,7 @@ async fn generate_abi(contract_address: web::Path<String>) -> impl Responder {
             );
             if output.status.success() {
                 info!("ABI generation successful");
-                let abi_path = format!("output/{}/abi.json", contract_address);
+                let abi_path = format!("output/1/{}/abi.json", contract_address);
                 info!("Reading ABI from {}", abi_path);
 
                 match fs::read_to_string(&abi_path) {
