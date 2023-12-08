@@ -45,6 +45,6 @@ Currently there is no documentation for this project.
 
 We welcome contributions to `gulltoppr`!
 
-Please see [CONTRIBUTING.MD](https://github.com/portdeveloper/gulltoppr/blob/main/CONTRIBUTING.md) for more information and guidelines for contributing to `gulltoppr`.
+Please see [CONTRIBUTING.MD](CONTRIBUTING.md) for more information and guidelines for contributing to `gulltoppr`.
 
 ---
