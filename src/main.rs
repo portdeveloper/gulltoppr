@@ -21,6 +21,7 @@ async fn generate_abi(path_info: web::Path<AbiPathInfo>) -> impl Responder {
         137 => "https://polygon.llamarpc.com",
         100 => "https://1rpc.io/gnosis",
         324 => "https://1rpc.io/zksync2-era",
+        534352 => "https://1rpc.io/scroll",
         _ => {
             error!("Unsupported chain_id: {}", path_info.chain_id);
             return HttpResponse::BadRequest().body("Unsupported chain_id");
