@@ -13,38 +13,64 @@ Check out the amazing tool that made this little project possible:
 
 ## Requirements
 
-Before you begin, ensure you have Rust installed on your system:
+Before you begin, ensure you have Rust and Docker installed on your system:
 
 - [Rust](https://www.rust-lang.org/tools/install)
+- [Docker](https://docs.docker.com/get-docker/)
 
 ## Quickstart
 
 To get started with `gulltoppr`, follow these steps:
 
-1. Clone this repo & install dependencies
+1. Clone this repo & install dependencies:
 
-```
-git clone [https://github.com/portdeveloper/gulltoppr.git]
-cd gulltoppr
-cargo build
-```
+   ```sh
+   git clone https://github.com/portdeveloper/gulltoppr.git
+   cd gulltoppr
+   cargo build
+   ```
 
 2. Run the server:
 
-```
-cargo run
-```
+   ```sh
+   cargo run
+   ```
 
-This command starts the `gulltoppr` backend server. The server runs on your local machine and interfaces with `heimdall-rs` for bytecode analysis.
+   This command starts the gulltoppr backend server. The server runs on your local machine and interfaces with heimdall-rs for bytecode analysis.
 
-## Documentation
+### Docker Quickstart
 
-Currently there is no documentation for this project.
+1. Build the Docker image:
 
-## Contributing to gulltoppr
+   ```sh
+   docker build -t gulltoppr .
+   ```
 
-We welcome contributions to `gulltoppr`!
+2. Run the Docker container:
 
-Please see [CONTRIBUTING.MD](CONTRIBUTING.md) for more information and guidelines for contributing to `gulltoppr`.
+   ```sh
+    docker run -p 8080:8080 gulltoppr
+   ```
 
----
+   This command starts the gulltoppr backend server in a Docker container. The server runs on your local machine and interfaces with heimdall-rs for bytecode analysis.
+
+## Endpoints
+
+### Greet Endpoint
+
+- **URL**: `/`
+- **Method**: `GET`
+- **Description**: Returns a greeting message.
+- **Example**: `curl http://localhost:8080/`
+
+### Generate ABI Endpoint
+
+- **URL**: `/{contract_address}`
+- **Method**: `GET`
+- **Description**: Generates the ABI for the specified contract address using the provided RPC URL.
+- **Query Parameters**:
+  - `rpc_url`: The RPC URL without the https:// prefix.
+- **Example**: `curl http://localhost:8080/0x1234567890abcdef1234567890abcdef12345678?rpc_url=eth.llamarpc.com`
+
+This request will generate the ABI for the specified contract address using the provided RPC URL and return it back to you in the response.
+
