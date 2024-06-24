@@ -2,42 +2,37 @@ use actix_cors::Cors;
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use log::{error, info};
 use serde::Deserialize;
+use std::collections::HashMap;
 use std::fs;
 use std::process::Command;
 
-// Define a struct to hold the chain_id and contract_address path parameters
-#[derive(Debug, Deserialize)] // Add Deserialize here
+#[derive(Debug, Deserialize)]
 struct AbiPathInfo {
-    chain_id: u32,
     contract_address: String,
 }
 
-async fn generate_abi(path_info: web::Path<AbiPathInfo>) -> impl Responder {
-    let rpc_url = match path_info.chain_id {
-        1 => "https://eth.llamarpc.com",
-        10 => "https://optimism.llamarpc.com",
-        42161 => "https://arbitrum.llamarpc.com",
-        8453 => "https://base.llamarpc.com",
-        137 => "https://polygon.llamarpc.com",
-        100 => "https://1rpc.io/gnosis",
-        324 => "https://1rpc.io/zksync2-era",
-        534352 => "https://1rpc.io/scroll",
-        11155111 => "https://1rpc.io/sepolia",
-        5 => "https://rpc.ankr.com/eth_goerli",
-        420 => "https://goerli.optimism.io",
-        84532 => "https://sepolia.base.org",
-        80001 => "https://rpc.ankr.com/polygon_mumbai",
-        534351 => "https://sepolia-rpc.scroll.",
-        _ => {
-            error!("Unsupported chain_id: {}", path_info.chain_id);
-            return HttpResponse::BadRequest().body("Unsupported chain_id");
+async fn generate_abi(
+    path_info: web::Path<AbiPathInfo>,
+    query: web::Query<HashMap<String, String>>,
+) -> impl Responder {
+    let rpc_url = match query.get("rpc_url") {
+        Some(url) => format!("https://{}", url),
+        None => {
+            error!("Missing rpc_url parameter");
+            return HttpResponse::BadRequest().body("Missing rpc_url parameter");
         }
     };
 
+    let sanitized_rpc_url = rpc_url.replace("https://", "").replace("/", "_");
+    let output_dir = format!(
+        "output/{}/{}",
+        sanitized_rpc_url, path_info.contract_address
+    );
+
     info!("Generating ABI for: {}", path_info.contract_address);
     let command = format!(
-        "heimdall decompile {} --rpc-url {}",
-        path_info.contract_address, rpc_url
+        "heimdall decompile {} --rpc-url {} -o {}",
+        path_info.contract_address, rpc_url, output_dir
     );
     info!("Executing command: {}", command);
 
@@ -46,6 +41,8 @@ async fn generate_abi(path_info: web::Path<AbiPathInfo>) -> impl Responder {
         .arg(&path_info.contract_address)
         .arg("--rpc-url")
         .arg(rpc_url)
+        .arg("-o")
+        .arg(&output_dir)
         .output();
 
     match output {
@@ -57,10 +54,7 @@ async fn generate_abi(path_info: web::Path<AbiPathInfo>) -> impl Responder {
             );
             if output.status.success() {
                 info!("ABI generation successful");
-                let abi_path = format!(
-                    "output/{}/{}/abi.json",
-                    path_info.chain_id, path_info.contract_address
-                );
+                let abi_path = format!("{}/abi.json", output_dir);
                 info!("Reading ABI from {}", abi_path);
 
                 match fs::read_to_string(&abi_path) {
@@ -101,10 +95,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(cors)
             .route("/", web::get().to(greet))
-            .route(
-                "/{chain_id}/{contract_address}",
-                web::get().to(generate_abi),
-            )
+            .route("/{contract_address}", web::get().to(generate_abi))
     })
     .bind("0.0.0.0:8080")?
     .run()
