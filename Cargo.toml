@@ -12,3 +12,4 @@ env_logger = "0.9"
 time = "0.3.36"
 actix-cors = "0.6.0"
 serde = { version = "1.0", features = ["derive"] }
+actix-governor = "0.5.0"

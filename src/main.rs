@@ -1,5 +1,6 @@
 use actix_cors::Cors;
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+use actix_governor::{Governor, GovernorConfigBuilder};
 use log::{error, info};
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -89,11 +90,18 @@ async fn greet() -> impl Responder {
 async fn main() -> std::io::Result<()> {
     env_logger::init();
 
-    HttpServer::new(|| {
+    let governor_conf = GovernorConfigBuilder::default()
+        .per_second(2) 
+        .burst_size(5) 
+        .finish()
+        .unwrap();
+
+    HttpServer::new(move || {
         let cors = Cors::permissive();
 
         App::new()
             .wrap(cors)
+            .wrap(Governor::new(&governor_conf))
             .route("/", web::get().to(greet))
             .route("/{contract_address}", web::get().to(generate_abi))
     })
