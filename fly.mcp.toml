@@ -1,0 +1,30 @@
+# Fly config for the abi.ninja MCP server (Streamable HTTP). Same codebase as the
+# engine, deployed separately so agents can connect at /mcp over HTTP.
+app = "abi-ninja-mcp"
+primary_region = "cdg"
+
+[build]
+  dockerfile = "Dockerfile.mcp"
+
+[env]
+  PORT = "8080"
+  # Thin client: all resolution happens in the engine (its cache + Etherscan key).
+  ENGINE_URL = "https://abi-ninja-engine.fly.dev"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

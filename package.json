@@ -1,0 +1,29 @@
+{
+  "name": "abi-ninja-engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The REST engine for abi.ninja-for-agents: resolution ladder + verb surface (resolve_abi, read, encode, simulate, prepare_tx, decode_tx, resolve_name). See ../SPEC.md.",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "mcp": "tsx src/mcp.ts",
+    "mcp:http": "tsx src/mcp-http.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "@modelcontextprotocol/sdk": "^1.13.0",
+    "@portdeveloper/abi-ninja-sdk": "^0.1.2",
+    "hono": "^4.6.14",
+    "tsx": "^4.19.2",
+    "viem": "^2.21.55",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

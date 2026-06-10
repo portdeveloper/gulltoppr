@@ -1,0 +1,17 @@
+# abi.ninja MCP server over Streamable HTTP — same image as the engine, different
+# entrypoint (mcp:http). Lets remote agents connect over HTTP without local stdio.
+FROM node:22-slim
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+
+COPY tsconfig.json ./
+COPY src ./src
+
+ENV NODE_ENV=production
+ENV PORT=8080
+EXPOSE 8080
+
+CMD ["npm", "run", "mcp:http"]

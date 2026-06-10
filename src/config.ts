@@ -1,0 +1,49 @@
+/**
+ * Runtime configuration from env, with sane defaults. Mirrors gulltoppr's
+ * env-with-defaults approach.
+ */
+
+function envString(key: string, fallback: string): string {
+  const v = process.env[key];
+  return v && v.length > 0 ? v : fallback;
+}
+
+function envNumber(key: string, fallback: number): number {
+  const v = process.env[key];
+  const n = v ? Number(v) : NaN;
+  return Number.isFinite(n) ? n : fallback;
+}
+
+export const config = {
+  port: envNumber("PORT", 8787),
+
+  /** gulltoppr — the heimdall decompile service (ladder rung 4). Already deployed. */
+  gulltopprUrl: envString("GULLTOPPR_URL", "https://heimdall-api.fly.dev"),
+
+  /** The deployed REST engine. The MCP server thin-clients this (shares its cache +
+   * Etherscan key) instead of resolving in-process. */
+  engineUrl: envString("ENGINE_URL", "https://abi-ninja-engine.fly.dev"),
+
+  /** Single multichain Etherscan v2 key (ladder rung 1). Empty disables rung 1. */
+  etherscanApiKey: envString("ETHERSCAN_API_KEY", ""),
+
+  /** Base URL used to build prepare_tx hand-off deeplinks (SPEC §9). */
+  abiNinjaBaseUrl: envString("ABININJA_BASE_URL", "https://abi.ninja"),
+
+  /** Per-rung deadlines (ms). */
+  etherscanTimeoutMs: envNumber("ETHERSCAN_TIMEOUT_MS", 8000),
+  sourcifyTimeoutMs: envNumber("SOURCIFY_TIMEOUT_MS", 8000),
+  heimdallTimeoutMs: envNumber("HEIMDALL_TIMEOUT_MS", 30000),
+
+  /** Per-IP rate limit (fixed window). ~2 req/s/IP by default, which keeps a flood
+   * of distinct lookups within the shared Etherscan key's budget. Set RATE_LIMIT=0
+   * to disable. RATE_LIMIT_ALLOW is a comma-separated IP allowlist (exempt). */
+  rateLimitMax: envNumber("RATE_LIMIT", 120),
+  rateLimitWindowMs: envNumber("RATE_LIMIT_WINDOW_SEC", 60) * 1000,
+  rateLimitAllow: new Set(
+    envString("RATE_LIMIT_ALLOW", "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
+  ),
+} as const;

@@ -1,0 +1,13 @@
+node_modules
+dist
+.git
+.env
+.env.local
+*.log
+sdk
+skill
+REVIVE.md
+.revive-pending
+SPEC.md
+IDEATION.md
+README.md

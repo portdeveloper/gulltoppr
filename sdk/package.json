@@ -1,0 +1,31 @@
+{
+  "name": "@portdeveloper/abi-ninja-sdk",
+  "version": "0.1.2",
+  "description": "Typed client for the abi.ninja engine — resolve any contract's ABI and prepare safe, simulated interactions for AI agents and apps.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "keywords": ["ethereum", "abi", "evm", "viem", "smart-contracts", "agents", "abi.ninja"],
+  "license": "MIT",
+  "peerDependencies": {
+    "viem": "^2"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "viem": "^2.21.55",
+    "vitest": "^2.1.8"
+  }
+}
