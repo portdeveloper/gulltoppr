@@ -97,5 +97,5 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.error(`abi.ninja MCP (Streamable HTTP) on http://0.0.0.0:${PORT}/mcp (7 tools, stateless)`);
+  console.error(`gulltoppr MCP (Streamable HTTP) on http://0.0.0.0:${PORT}/mcp (7 tools, stateless)`);
 });

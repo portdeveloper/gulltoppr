@@ -1,8 +1,8 @@
 {
-  "name": "abi-ninja-engine",
+  "name": "gulltoppr-engine",
   "version": "0.1.0",
   "private": true,
-  "description": "The REST engine for abi.ninja-for-agents: resolution ladder + verb surface (resolve_abi, read, encode, simulate, prepare_tx, decode_tx, resolve_name). See ../SPEC.md.",
+  "description": "gulltoppr engine: resolution ladder + verb surface (resolve_abi, read, encode, simulate, prepare_tx, decode_tx, resolve_name) that lets agents interact with any contract on any EVM chain. See ../SPEC.md.",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -15,7 +15,7 @@
   "dependencies": {
     "@hono/node-server": "^1.13.7",
     "@modelcontextprotocol/sdk": "^1.13.0",
-    "@portdeveloper/abi-ninja-sdk": "^0.1.2",
+    "gulltoppr": "^0.1.0",
     "hono": "^4.6.14",
     "tsx": "^4.19.2",
     "viem": "^2.21.55",

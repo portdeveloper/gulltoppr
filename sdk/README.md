@@ -1,21 +1,21 @@
-# @portdeveloper/abi-ninja-sdk
+# gulltoppr
 
-Typed TypeScript client for the [abi.ninja engine](../README.md) — resolve any
+Typed TypeScript client for the [gulltoppr](../README.md) — resolve any
 contract's ABI (verified *or* unverified, via the heimdall decompile rung) and
 prepare safe, simulated, non-custodial interactions. The typed client over the REST
 surface in [`../SPEC.md`](../SPEC.md) §4.
 
 ```bash
-npm install @portdeveloper/abi-ninja-sdk viem
+npm install gulltoppr viem
 ```
 
 ## Usage
 
 ```ts
-import { AbiNinja } from "@portdeveloper/abi-ninja-sdk";
+import { AbiNinja } from "gulltoppr";
 
 // baseUrl defaults to the live engine; pass it only to override.
-const ninja = new AbiNinja({ baseUrl: "https://abi-ninja-engine.fly.dev" });
+const ninja = new AbiNinja({ baseUrl: "https://gulltoppr.fly.dev" });
 
 // Resolve — ABI is secondary; the capability manifest + provenance are the point.
 const r = await ninja.resolveAbi("base", "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913");

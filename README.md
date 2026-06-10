@@ -1,4 +1,4 @@
-# abi.ninja engine
+# gulltoppr
 
 The REST engine for **abi.ninja-for-agents** — the resolution ladder + verb surface
 that lets an AI agent go from `(chain, address)` to a correct, simulated, safe
@@ -26,9 +26,9 @@ npm test               # vitest — unit tests (cache, chains, ladder helpers, a
 | var | default | notes |
 |-----|---------|-------|
 | `PORT` | `8787` | |
-| `GULLTOPPR_URL` | `https://heimdall-api.fly.dev` | heimdall decompile service (ladder rung 4) |
+| `HEIMDALL_API_URL` | `https://heimdall-api.fly.dev` | heimdall decompile service (ladder rung 4) |
 | `ETHERSCAN_API_KEY` | _(empty)_ | one multichain v2 key; empty disables rung 1 |
-| `ABININJA_BASE_URL` | `https://abi.ninja` | base for `prepare_tx` hand-off deeplinks |
+| `SIGNING_BASE_URL` | `https://abi.ninja` | base for `prepare_tx` hand-off deeplinks |
 | `RATE_LIMIT` | `120` | per-IP requests per window (fixed window); `0` disables |
 | `RATE_LIMIT_WINDOW_SEC` | `60` | rate-limit window length |
 | `RATE_LIMIT_ALLOW` | _(empty)_ | comma-separated IP allowlist (exempt); private 6PN IPs are always exempt |
@@ -59,7 +59,7 @@ curl -X POST localhost:8787/v1/ethereum/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756C
 ## MCP server (SPEC §5)
 
 `npm run mcp` starts a stdio MCP server exposing the same seven verbs as tools. The
-tools are a thin adapter over the deployed REST engine via `@portdeveloper/abi-ninja-sdk`
+tools are a thin adapter over the deployed REST engine via `gulltoppr`
 (`ENGINE_URL`), so the MCP shares the engine's persistent cache and Etherscan key —
 no duplicated resolution or secrets. Tool descriptions bake in the non-custodial
 hand-off model (`prepare_tx` never signs) and lead with provenance warnings when an
@@ -70,7 +70,7 @@ Wire it into an MCP client (Claude Desktop / Claude Code `mcp` config):
 ```json
 {
   "mcpServers": {
-    "abi-ninja": {
+    "gulltoppr": {
       "command": "npm",
       "args": ["run", "--silent", "mcp"],
       "cwd": "/home/ubuntu/repos/abi-agent",
@@ -87,11 +87,11 @@ Tools: `resolve_abi`, `read_contract`, `encode_call`, `simulate`, `prepare_tx`,
 ### Remote (Streamable HTTP)
 
 For agents that can't run a local stdio server, the same MCP is hosted over HTTP at
-**https://abi-ninja-mcp.fly.dev/mcp** (`npm run mcp:http` locally; stateless). Point
+**https://gulltoppr-mcp.fly.dev/mcp** (`npm run mcp:http` locally; stateless). Point
 an HTTP-capable MCP client at that URL:
 
 ```json
-{ "mcpServers": { "abi-ninja": { "url": "https://abi-ninja-mcp.fly.dev/mcp" } } }
+{ "mcpServers": { "gulltoppr": { "url": "https://gulltoppr-mcp.fly.dev/mcp" } } }
 ```
 
 Tool registration is shared (`src/mcp-server.ts`) between the stdio entry (`mcp.ts`)
@@ -99,32 +99,32 @@ and the HTTP entry (`mcp-http.ts`), deployed via `Dockerfile.mcp` / `fly.mcp.tom
 
 ## npm SDK
 
-A typed client over this REST surface lives in [`sdk/`](sdk/) (`@portdeveloper/abi-ninja-sdk`) —
+A typed client over this REST surface lives in [`sdk/`](sdk/) (`gulltoppr`) —
 `new AbiNinja({ baseUrl }).resolveAbi(...)` / `.read(...)` / `.prepareTx(...)`, plus
 a `contract()` helper. It's the third face (after REST and MCP) and the basis for
 refactoring abi.ninja's frontend onto a shared client. See [`sdk/README.md`](sdk/README.md).
 
 ## Deploy
 
-Live at **https://abi-ninja-engine.fly.dev** (Fly.io, region `cdg` — co-located with
+Live at **https://gulltoppr.fly.dev** (Fly.io, region `cdg` — co-located with
 gulltoppr to minimize ladder rung-4 latency). Containerized via the `Dockerfile`
 (Node 22, run with `tsx`; ~82 MB image), configured by `fly.toml`.
 
 ```bash
 flyctl deploy --remote-only --ha=false
 # optional: set an Etherscan v2 key to enable ladder rung 1
-flyctl secrets set ETHERSCAN_API_KEY=... -a abi-ninja-engine
+flyctl secrets set ETHERSCAN_API_KEY=... -a gulltoppr
 ```
 
-`GULLTOPPR_URL` / `ABININJA_BASE_URL` / `PORT` are set in `fly.toml [env]`.
+`HEIMDALL_API_URL` / `SIGNING_BASE_URL` / `PORT` are set in `fly.toml [env]`.
 Machines auto-stop when idle and auto-start on request.
 
 ## Claude Skill
 
-The fourth face: a [Claude Skill](skill/) (`skill/abi-ninja/`) that teaches an agent
+The fourth face: a [Claude Skill](skill/) (`skill/gulltoppr/`) that teaches an agent
 the workflow — resolve → check provenance → read or prepare → simulate → hand off —
 and the non-custodial safety rules. Install with
-`cp -r skill/abi-ninja ~/.claude/skills/abi-ninja`. See [`skill/README.md`](skill/README.md).
+`cp -r skill/gulltoppr ~/.claude/skills/gulltoppr`. See [`skill/README.md`](skill/README.md).
 
 ## Layout
 

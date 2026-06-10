@@ -1,7 +1,7 @@
 {
-  "name": "@portdeveloper/abi-ninja-sdk",
-  "version": "0.1.2",
-  "description": "Typed client for the abi.ninja engine — resolve any contract's ABI and prepare safe, simulated interactions for AI agents and apps.",
+  "name": "gulltoppr",
+  "version": "0.1.0",
+  "description": "Typed client for gulltoppr — let agents interact with any contract on any EVM chain: resolve ABIs (even unverified), read, simulate, and prepare safe non-custodial transactions.",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -18,7 +18,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
   },
-  "keywords": ["ethereum", "abi", "evm", "viem", "smart-contracts", "agents", "abi.ninja"],
+  "keywords": ["ethereum", "abi", "evm", "viem", "smart-contracts", "agents", "gulltoppr", "mcp"],
+  "homepage": "https://github.com/portdeveloper/gulltoppr",
+  "repository": { "type": "git", "url": "git+https://github.com/portdeveloper/gulltoppr.git", "directory": "sdk" },
   "license": "MIT",
   "peerDependencies": {
     "viem": "^2"

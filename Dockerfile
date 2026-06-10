@@ -1,4 +1,4 @@
-# abi.ninja engine — Node 22 service run via tsx (TS executed directly; no build
+# gulltoppr engine — Node 22 service run via tsx (TS executed directly; no build
 # step needed for an HTTP orchestration layer). The heimdall decompile work lives
 # in the separate gulltoppr service, so this image stays small.
 FROM node:22-slim

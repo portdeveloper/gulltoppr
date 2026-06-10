@@ -18,17 +18,17 @@ export const config = {
   port: envNumber("PORT", 8787),
 
   /** gulltoppr — the heimdall decompile service (ladder rung 4). Already deployed. */
-  gulltopprUrl: envString("GULLTOPPR_URL", "https://heimdall-api.fly.dev"),
+  heimdallApiUrl: envString("HEIMDALL_API_URL", "https://heimdall-api.fly.dev"),
 
   /** The deployed REST engine. The MCP server thin-clients this (shares its cache +
    * Etherscan key) instead of resolving in-process. */
-  engineUrl: envString("ENGINE_URL", "https://abi-ninja-engine.fly.dev"),
+  engineUrl: envString("ENGINE_URL", "https://gulltoppr.fly.dev"),
 
   /** Single multichain Etherscan v2 key (ladder rung 1). Empty disables rung 1. */
   etherscanApiKey: envString("ETHERSCAN_API_KEY", ""),
 
   /** Base URL used to build prepare_tx hand-off deeplinks (SPEC §9). */
-  abiNinjaBaseUrl: envString("ABININJA_BASE_URL", "https://abi.ninja"),
+  signingBaseUrl: envString("SIGNING_BASE_URL", "https://abi.ninja"),
 
   /** Per-rung deadlines (ms). */
   etherscanTimeoutMs: envNumber("ETHERSCAN_TIMEOUT_MS", 8000),

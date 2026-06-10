@@ -16,7 +16,7 @@ export interface HeimdallHit {
 }
 
 export async function fromHeimdall(address: Address, rpcUrl: string): Promise<HeimdallHit | null> {
-  const url = `${config.gulltopprUrl}/v1/${address}?rpc_url=${encodeURIComponent(rpcUrl)}`;
+  const url = `${config.heimdallApiUrl}/v1/${address}?rpc_url=${encodeURIComponent(rpcUrl)}`;
 
   const res = await fetchWithTimeout(url, config.heimdallTimeoutMs, "gulltoppr");
 
@@ -36,7 +36,7 @@ export async function decodeTxViaHeimdall(
   txHash: string,
   rpcUrl: string,
 ): Promise<{ source: string; cached: boolean; decoded: unknown }> {
-  const url = `${config.gulltopprUrl}/v1/decode/${txHash}?rpc_url=${encodeURIComponent(rpcUrl)}`;
+  const url = `${config.heimdallApiUrl}/v1/decode/${txHash}?rpc_url=${encodeURIComponent(rpcUrl)}`;
   const res = await fetchWithTimeout(url, config.heimdallTimeoutMs, "gulltoppr decode");
   if (res.status === 502 || res.status === 504) {
     throw new ApiError("DECOMPILE_FAILED", "gulltoppr failed to decode the transaction.");

@@ -1,4 +1,4 @@
-# abi.ninja MCP server over Streamable HTTP — same image as the engine, different
+# gulltoppr MCP server over Streamable HTTP — same image as the engine, different
 # entrypoint (mcp:http). Lets remote agents connect over HTTP without local stdio.
 FROM node:22-slim
 

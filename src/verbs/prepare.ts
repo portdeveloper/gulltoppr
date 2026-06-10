@@ -16,9 +16,13 @@ function humanSummary(fn: string, address: string, args: unknown[]): string {
   return `Call ${fn}(${argStr}) on ${address}.`;
 }
 
+// Optional convenience signing surface. Default is abi.ninja (a public app we can
+// link to without any access); set SIGNING_BASE_URL="" to omit the deeplink entirely
+// and rely solely on `unsigned_tx`. gulltoppr does not depend on it.
 function deeplink(chainId: number, address: string, fn: string, rawArgs: unknown[]): string {
+  if (!config.signingBaseUrl) return "";
   const args = encodeURIComponent(JSON.stringify(rawArgs));
-  return `${config.abiNinjaBaseUrl}/${chainId}/${address}?function=${encodeURIComponent(fn)}&args=${args}`;
+  return `${config.signingBaseUrl}/${chainId}/${address}?function=${encodeURIComponent(fn)}&args=${args}`;
 }
 
 export async function prepareTx(call: Call, rpcOverride?: string): Promise<PreparedTx> {

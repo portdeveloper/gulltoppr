@@ -1,20 +1,20 @@
 # Fly config for the abi.ninja engine. Co-located in cdg with gulltoppr
 # (heimdall-api) to minimize ladder rung-4 latency.
-app = "abi-ninja-engine"
+app = "gulltoppr"
 primary_region = "cdg"
 
 [build]
 
 [env]
   PORT = "8080"
-  GULLTOPPR_URL = "https://heimdall-api.fly.dev"
-  ABININJA_BASE_URL = "https://abi.ninja"
+  HEIMDALL_API_URL = "https://heimdall-api.fly.dev"
+  SIGNING_BASE_URL = "https://abi.ninja"
   # Persistent result cache: SQLite (node:sqlite) on the mounted volume.
   NODE_OPTIONS = "--experimental-sqlite"
   CACHE_DB_PATH = "/data/cache.db"
 
 [[mounts]]
-  source = "abi_cache"
+  source = "gulltoppr_cache"
   destination = "/data"
 
 [http_service]

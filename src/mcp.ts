@@ -8,4 +8,4 @@ import { createMcpServer } from "./mcp-server.js";
 const transport = new StdioServerTransport();
 await createMcpServer().connect(transport);
 // stderr is safe to log on (stdout is the JSON-RPC channel).
-console.error("abi.ninja MCP server ready on stdio (7 tools).");
+console.error("gulltoppr MCP server ready on stdio (7 tools).");

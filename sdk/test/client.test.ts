@@ -92,6 +92,6 @@ describe("AbiNinja client", () => {
   it("defaults baseUrl to the live engine", async () => {
     const { fn, calls } = fakeFetch(() => ({ body: {} }));
     await new AbiNinja({ fetch: fn }).resolveName("vitalik.eth");
-    expect(calls[0].url.startsWith("https://abi-ninja-engine.fly.dev/")).toBe(true);
+    expect(calls[0].url.startsWith("https://gulltoppr.fly.dev/")).toBe(true);
   });
 });

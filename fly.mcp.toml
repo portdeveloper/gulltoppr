@@ -1,6 +1,6 @@
 # Fly config for the abi.ninja MCP server (Streamable HTTP). Same codebase as the
 # engine, deployed separately so agents can connect at /mcp over HTTP.
-app = "abi-ninja-mcp"
+app = "gulltoppr-mcp"
 primary_region = "cdg"
 
 [build]
@@ -9,7 +9,7 @@ primary_region = "cdg"
 [env]
   PORT = "8080"
   # Thin client: all resolution happens in the engine (its cache + Etherscan key).
-  ENGINE_URL = "https://abi-ninja-engine.fly.dev"
+  ENGINE_URL = "https://gulltoppr.fly.dev"
 
 [http_service]
   internal_port = 8080

@@ -1,6 +1,6 @@
 /**
  * Shared MCP server factory — SPEC §5. One tool per verb. The tools are a thin
- * adapter over the deployed REST engine via @portdeveloper/abi-ninja-sdk, so the MCP
+ * adapter over the deployed REST engine via gulltoppr, so the MCP
  * server shares the engine's persistent cache and Etherscan key (no in-process
  * resolution, no duplicated secrets). Both transports import this:
  *  - mcp.ts        → stdio   (Claude Desktop / Code / local clients)
@@ -12,7 +12,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { AbiNinja, AbiNinjaError } from "@portdeveloper/abi-ninja-sdk";
+import { AbiNinja, AbiNinjaError } from "gulltoppr";
 import type { Address } from "viem";
 
 import { safeStringify } from "./util.js";
@@ -58,7 +58,7 @@ const opts = (rpcUrl?: string) => (rpcUrl ? { rpcUrl } : undefined);
 
 /** Build a fully-configured MCP server (all 7 verb tools registered). */
 export function createMcpServer(): McpServer {
-  const server = new McpServer({ name: "abi-ninja", version: "0.1.0" });
+  const server = new McpServer({ name: "gulltoppr", version: "0.1.0" });
 
   server.registerTool(
     "resolve_abi",

@@ -1,5 +1,5 @@
 ---
-name: abi-ninja
+name: gulltoppr
 description: >-
   Interact with any smart contract on any EVM chain — resolve its ABI (even for
   UNVERIFIED contracts, via heimdall decompilation), read on-chain state, or prepare
@@ -61,15 +61,15 @@ Other verbs: `decode_tx(chain, hash)` ("what did this tx do?"),
 
 ## How to call it
 
-**If the `abi-ninja` MCP server is connected** (preferred for an agent): call the
+**If the `gulltoppr` MCP server is connected** (preferred for an agent): call the
 tools `resolve_abi`, `read_contract`, `encode_call`, `simulate`, `prepare_tx`,
 `decode_tx`, `resolve_name` directly.
 
-**If you're writing code / building an app**: use the `@portdeveloper/abi-ninja-sdk` client.
+**If you're writing code / building an app**: use the `gulltoppr` client.
 
 ```ts
-import { AbiNinja } from "@portdeveloper/abi-ninja-sdk";
-const ninja = new AbiNinja({ baseUrl: "https://abi-ninja-engine.fly.dev" });
+import { AbiNinja } from "gulltoppr";
+const ninja = new AbiNinja({ baseUrl: "https://gulltoppr.fly.dev" });
 
 const r = await ninja.resolveAbi("base", "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913");
 if (r.provenance.names_synthetic) { /* warn the user: names are inferred */ }

@@ -1,4 +1,4 @@
-/** @portdeveloper/abi-ninja-sdk — typed client for the abi.ninja engine. */
+/** gulltoppr — typed client for the abi.ninja engine. */
 export { AbiNinja, Contract } from "./client.js";
 export type { AbiNinjaOptions, CallOpts } from "./client.js";
 export { AbiNinjaError } from "./errors.js";

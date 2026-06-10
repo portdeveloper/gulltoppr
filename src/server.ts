@@ -45,7 +45,7 @@ app.use(
 // Per-IP rate limit (after CORS so 429s still carry CORS headers).
 app.use("*", rateLimit);
 
-app.get("/health", (c) => send(c, { ok: true, gulltoppr: config.gulltopprUrl }));
+app.get("/health", (c) => send(c, { ok: true, heimdallApi: config.heimdallApiUrl }));
 
 app.get("/", (c) =>
   send(c, {
