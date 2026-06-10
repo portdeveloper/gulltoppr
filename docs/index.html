@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>gulltoppr — interact with any contract on any EVM chain</title>
+    <meta name="description" content="Let AI agents interact with any smart contract on any EVM chain — resolve ABIs (even unverified, via decompilation), read, simulate, and prepare safe non-custodial transactions. REST + MCP + SDK." />
+    <meta property="og:title" content="gulltoppr" />
+    <meta property="og:description" content="The universal, safe, agent-native interface to any EVM contract — including the ones nobody verified." />
+    <style>
+      :root {
+        --bg: #0b0e14; --panel: #131822; --panel2: #1a2130; --line: #232c3d;
+        --ink: #e6edf3; --dim: #8b98ad; --acc: #6ee7b7; --acc2: #7aa2f7;
+        --warn: #fbbf24; --bad: #f87171;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+      code, pre, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      a { color: var(--acc2); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .wrap { max-width: 880px; margin: 0 auto; padding: 0 20px; }
+      header { padding: 64px 0 28px; text-align: center; }
+      .logo { font-size: 40px; font-weight: 800; letter-spacing: -0.02em; }
+      .logo .n { color: var(--acc); }
+      .tag { font-size: 20px; margin: 14px 0 6px; }
+      .sub { color: var(--dim); max-width: 620px; margin: 0 auto; }
+      .cta { margin-top: 22px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+      .btn { display: inline-block; padding: 9px 16px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font-weight: 600; }
+      .btn.primary { background: var(--acc); color: #062018; border-color: var(--acc); }
+      section { margin: 34px 0; }
+      h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--dim); margin: 0 0 12px; }
+      .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+      .row { display: flex; gap: 10px; flex-wrap: wrap; }
+      select, input { background: var(--panel2); color: var(--ink); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; font: inherit; }
+      input.addr { flex: 1; min-width: 240px; font-family: ui-monospace, monospace; }
+      button.go { background: var(--acc); color: #062018; border: none; border-radius: 9px; padding: 10px 18px; font-weight: 700; cursor: pointer; }
+      button.go:disabled { opacity: .6; cursor: default; }
+      .chips { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+      .chip { font-size: 12px; color: var(--dim); border: 1px solid var(--line); border-radius: 20px; padding: 3px 10px; cursor: pointer; background: var(--panel2); }
+      .chip:hover { color: var(--ink); }
+      #out { margin-top: 16px; }
+      .badge { display: inline-block; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+      .b-verified { background: #0f2e22; color: var(--acc); border: 1px solid #1d5b44; }
+      .b-decompiled { background: #2e260f; color: var(--warn); border: 1px solid #5b4a1d; }
+      .b-partial, .b-selector-only { background: #1c2433; color: var(--dim); border: 1px solid var(--line); }
+      .meta { color: var(--dim); font-size: 13px; margin: 8px 0; }
+      .fns { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px; }
+      .fns h3 { margin: 0 0 6px; font-size: 13px; }
+      .fns ul { margin: 0; padding-left: 0; list-style: none; max-height: 220px; overflow: auto; }
+      .fns li { font-family: ui-monospace, monospace; font-size: 12.5px; color: var(--ink); padding: 2px 0; border-bottom: 1px solid var(--line); }
+      .err { color: var(--bad); font-family: ui-monospace, monospace; font-size: 13px; }
+      pre { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; overflow: auto; font-size: 13px; }
+      .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+      footer { color: var(--dim); font-size: 13px; text-align: center; padding: 40px 0; border-top: 1px solid var(--line); margin-top: 40px; }
+      @media (max-width: 640px) { .fns, .grid2 { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="logo">gulltoppr<span class="n">.</span></div>
+        <div class="tag">Interact with <b>any</b> contract on <b>any</b> EVM chain.</div>
+        <p class="sub">
+          The universal, safe, agent-native interface to any EVM contract — including the ones
+          nobody verified. Resolve an ABI (even from raw bytecode, via decompilation), read,
+          simulate, and prepare <b>non-custodial</b> transactions. Built for AI agents: MCP + SDK + REST.
+        </p>
+        <div class="cta">
+          <a class="btn primary" href="https://github.com/portdeveloper/gulltoppr">GitHub</a>
+          <a class="btn" href="https://www.npmjs.com/package/gulltoppr">npm</a>
+          <a class="btn" href="https://gulltoppr-mcp.fly.dev/mcp">MCP endpoint</a>
+        </div>
+      </header>
+
+      <section>
+        <h2>Try it — resolve any contract</h2>
+        <div class="panel">
+          <div class="row">
+            <select id="chain">
+              <option value="ethereum">ethereum</option>
+              <option value="base">base</option>
+              <option value="optimism">optimism</option>
+              <option value="arbitrum">arbitrum</option>
+              <option value="polygon">polygon</option>
+            </select>
+            <input class="addr" id="addr" placeholder="0x… contract address" spellcheck="false" />
+            <button class="go" id="go">Resolve</button>
+          </div>
+          <div class="chips" id="chips"></div>
+          <div id="out"></div>
+        </div>
+        <p class="meta">Calls the live engine at <code>gulltoppr.fly.dev</code> directly from your browser.
+          Paste an <b>unverified</b> contract — it still resolves (and tells you the ABI was decompiled).</p>
+      </section>
+
+      <section>
+        <h2>Use it from an agent (MCP)</h2>
+        <pre>{ "mcpServers": { "gulltoppr": { "url": "https://gulltoppr-mcp.fly.dev/mcp" } } }</pre>
+        <div class="grid2">
+          <div>
+            <h2>…or from code (SDK)</h2>
+            <pre>npm i gulltoppr
+
+import { AbiNinja } from "gulltoppr";
+const g = new AbiNinja();
+
+const r = await g.resolveAbi("base", "0x833…2913");
+// r.interface.reads / .writes, r.provenance, r.proxy
+
+const tx = await g.prepareTx("base", addr, "transfer",
+  [to, "1000000"], { from: myWallet });
+// → unsigned tx + simulation + warnings (never signs)</pre>
+          </div>
+          <div>
+            <h2>…or plain REST</h2>
+            <pre>curl https://gulltoppr.fly.dev/v1/base/0x833…2913/abi
+
+# verbs: resolve_abi · read_contract · encode_call
+#        simulate · prepare_tx · decode_tx · resolve_name</pre>
+            <p class="meta">7 verbs, one resolution ladder: Etherscan → Sourcify →
+              proxy → <a href="https://github.com/portdeveloper/heimdall-api">heimdall decompile</a> → 4byte,
+              with first-class <b>provenance</b> so an agent knows how much to trust the ABI.</p>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        gulltoppr · non-custodial · open source ·
+        <a href="https://github.com/portdeveloper/gulltoppr">repo</a> ·
+        <a href="https://www.npmjs.com/package/gulltoppr">npm</a> ·
+        <a href="https://gulltoppr.fly.dev/">engine</a> ·
+        <a href="https://github.com/portdeveloper/heimdall-api">heimdall-api</a>
+        <br />rides <a href="https://github.com/Jon-Becker/heimdall-rs">heimdall-rs</a> to reach any contract.
+      </footer>
+    </div>
+
+    <script>
+      const API = "https://gulltoppr.fly.dev";
+      const $ = (id) => document.getElementById(id);
+      const examples = [
+        { label: "DAI (ethereum)", chain: "ethereum", addr: "0x6B175474E89094C44Da98b954EedeAC495271d0F" },
+        { label: "USDC (base)", chain: "base", addr: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" },
+        { label: "WETH (ethereum)", chain: "ethereum", addr: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2" },
+      ];
+      const chips = $("chips");
+      examples.forEach((e) => {
+        const c = document.createElement("span");
+        c.className = "chip";
+        c.textContent = e.label;
+        c.onclick = () => { $("chain").value = e.chain; $("addr").value = e.addr; resolve(); };
+        chips.appendChild(c);
+      });
+
+      function esc(s) { return String(s).replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m])); }
+      function list(items) {
+        return "<ul>" + (items.length ? items.map((f) => "<li>" + esc(f.signature) + "</li>").join("") : "<li class='meta'>none</li>") + "</ul>";
+      }
+
+      async function resolve() {
+        const chain = $("chain").value;
+        const addr = $("addr").value.trim();
+        const out = $("out");
+        if (!/^0x[0-9a-fA-F]{40}$/.test(addr)) { out.innerHTML = "<p class='err'>Enter a valid 0x address.</p>"; return; }
+        $("go").disabled = true;
+        out.innerHTML = "<p class='meta'>Resolving… (first call may take a few seconds while the engine wakes)</p>";
+        try {
+          const res = await fetch(`${API}/v1/${encodeURIComponent(chain)}/${addr}/abi`);
+          const data = await res.json();
+          if (!res.ok) { out.innerHTML = `<p class='err'>${esc(data.error?.code || res.status)}: ${esc(data.error?.message || "error")}</p>`; return; }
+          const p = data.provenance;
+          const badge = `<span class="badge b-${p.confidence}">${p.confidence.toUpperCase()}</span>`;
+          const tok = data.token?.symbol ? ` · token <b>${esc(data.token.symbol)}</b>` : "";
+          const proxy = data.proxy ? ` · ${esc(data.proxy.pattern)} proxy → impl <code>${esc(data.abi_for.slice(0, 10))}…</code>` : "";
+          out.innerHTML =
+            `<div>${badge} <span class="meta">source: ${esc(p.source)}${tok}${proxy}${data.cached ? " · cached" : ""}</span></div>` +
+            (p.names_synthetic ? `<p class="meta" style="color:var(--warn)">⚠ Decompiled — function/param names are inferred. ${esc(p.notes || "")}</p>` : "") +
+            `<div class="fns"><div><h3>Read (${data.interface.reads.length})</h3>${list(data.interface.reads)}</div>` +
+            `<div><h3>Write (${data.interface.writes.length})</h3>${list(data.interface.writes)}</div></div>`;
+        } catch (e) {
+          out.innerHTML = `<p class='err'>${esc(e.message)}</p>`;
+        } finally {
+          $("go").disabled = false;
+        }
+      }
+      $("go").onclick = resolve;
+      $("addr").addEventListener("keydown", (e) => { if (e.key === "Enter") resolve(); });
+    </script>
+  </body>
+</html>
