@@ -12,6 +12,7 @@ import { safeStringify } from "./util.js";
 import { rateLimit } from "./rateLimit.js";
 import { getClient } from "./clients.js";
 import { resolveAbi } from "./resolve/index.js";
+import { registry } from "./registry/store.js";
 import { encodeCall } from "./verbs/encode.js";
 import { readContract } from "./verbs/read.js";
 import { simulate, requireFrom } from "./verbs/simulate.js";
@@ -54,6 +55,24 @@ app.get("/", (c) =>
     verbs: ["resolve_abi", "read_contract", "encode_call", "simulate", "prepare_tx", "decode_tx", "resolve_name"],
   }),
 );
+
+// Registry lookup — the open selector→signature commons. 4-byte (0x + 8 hex,
+// functions/errors) or 32-byte (0x + 64 hex, event topic0). Chain-independent.
+app.get("/v1/lookup/:selector", async (c) => {
+  const selector = c.req.param("selector").toLowerCase();
+  if (!/^0x([0-9a-f]{8}|[0-9a-f]{64})$/.test(selector)) {
+    throw new ApiError("INVALID_ARGS", "Selector must be 0x + 8 hex chars (function/error) or 0x + 64 hex chars (event topic0).");
+  }
+  const entries = registry.lookup(selector).map((e) => ({
+    kind: e.kind,
+    signature: e.signature,
+    proof: e.proof, // 'verified-source' (from verified code) | 'keccak-proven' (signature proven; semantics inferred)
+    ...(e.abi_item ? { abi_item: e.abi_item } : {}),
+  }));
+  return send(c, { selector, entries });
+});
+
+app.get("/v1/registry/stats", async (c) => send(c, registry.stats()));
 
 // resolve_abi
 app.get("/v1/:chain/:address/abi", async (c) => {

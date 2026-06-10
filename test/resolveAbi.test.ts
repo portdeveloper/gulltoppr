@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Fake viem client: a contract exists (getCode non-empty); token detection misses.
+// Bytecode is per-address by default so the registry's bytecode-match rung
+// (which keys on skeleton hash) doesn't fire across unrelated test cases.
+const codeFor = (address: string) => ("0x6001" + address.slice(-4)) as `0x${string}`;
 const fakeClient = {
-  getCode: vi.fn(async () => "0x6001"),
+  getCode: vi.fn(async ({ address }: { address: string }) => codeFor(address)),
   readContract: vi.fn(async () => {
     throw new Error("not erc20");
   }),
@@ -16,6 +19,8 @@ vi.mock("../src/resolve/etherscan.js", () => ({ fromEtherscan: vi.fn(async () =>
 vi.mock("../src/resolve/sourcify.js", () => ({ fromSourcify: vi.fn(async () => null) }));
 vi.mock("../src/resolve/heimdall.js", () => ({ fromHeimdall: vi.fn(async () => null), decodeTxViaHeimdall: vi.fn() }));
 vi.mock("../src/resolve/fourbyte.js", () => ({ fromFourByte: vi.fn(async () => null) }));
+// Never let the fire-and-forget LLM pass make real API calls from tests.
+vi.mock("../src/registry/propose.js", () => ({ proposeAndVerify: vi.fn(async () => 0) }));
 
 import { resolveAbi } from "../src/resolve/index.js";
 import { fromEtherscan } from "../src/resolve/etherscan.js";
@@ -41,7 +46,7 @@ beforeEach(() => {
   vi.mocked(fromSourcify).mockResolvedValue(null);
   vi.mocked(fromHeimdall).mockResolvedValue(null);
   vi.mocked(detectProxy).mockResolvedValue(null);
-  fakeClient.getCode.mockResolvedValue("0x6001");
+  fakeClient.getCode.mockImplementation(async ({ address }: { address: string }) => codeFor(address));
   fakeClient.readContract.mockRejectedValue(new Error("not erc20"));
 });
 
@@ -87,5 +92,39 @@ describe("resolveAbi ladder + provenance", () => {
     expect(first.cached).toBe(false);
     expect(second.cached).toBe(true);
     expect(vi.mocked(fromEtherscan).mock.calls.length).toBe(1);
+  });
+
+  it("rung 3.5: clone of a verified contract resolves via bytecode-match (confidence capped to partial)", async () => {
+    const ORIGINAL = "0x00000000000000000000000000000000000000a1";
+    const CLONE = "0x00000000000000000000000000000000000000a2";
+    const SHARED_CODE = "0x6001beef" as `0x${string}`;
+    fakeClient.getCode.mockResolvedValue(SHARED_CODE); // both addresses share bytecode
+
+    // 1) original resolves verified via Etherscan → seeds the registry
+    vi.mocked(fromEtherscan).mockResolvedValue({ abi: ABI as any, natspec: true, isProxy: false });
+    await resolveAbi(1, ORIGINAL);
+
+    // 2) clone: etherscan + sourcify miss → bytecode-match, heimdall never called
+    vi.mocked(fromEtherscan).mockResolvedValue(null);
+    const r = await resolveAbi(1, CLONE);
+    expect(r.provenance).toMatchObject({ source: "bytecode-match", confidence: "partial", verified: false, names_synthetic: false });
+    expect(r.provenance.notes?.toLowerCase()).toContain(ORIGINAL.toLowerCase());
+    expect(r.interface.writes.map((w) => w.function)).toContain("transfer");
+    expect(vi.mocked(fromHeimdall)).not.toHaveBeenCalled();
+  });
+
+  it("rung 3.5: clone of a decompiled contract reuses the decompile (stays decompiled/synthetic)", async () => {
+    const ORIGINAL = "0x00000000000000000000000000000000000000b1";
+    const CLONE = "0x00000000000000000000000000000000000000b2";
+    const SHARED_CODE = "0x6001cafe" as `0x${string}`;
+    fakeClient.getCode.mockResolvedValue(SHARED_CODE);
+
+    vi.mocked(fromHeimdall).mockResolvedValue({ abi: ABI as any, cached: false });
+    await resolveAbi(1, ORIGINAL); // decompiled → recorded under the skeleton hash
+
+    vi.mocked(fromHeimdall).mockClear();
+    const r = await resolveAbi(1, CLONE);
+    expect(r.provenance).toMatchObject({ source: "bytecode-match", confidence: "decompiled", names_synthetic: true });
+    expect(vi.mocked(fromHeimdall)).not.toHaveBeenCalled();
   });
 });

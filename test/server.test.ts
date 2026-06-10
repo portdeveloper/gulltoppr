@@ -35,6 +35,35 @@ describe("HTTP layer", () => {
     expect((await app.request("/nope")).status).toBe(404);
   });
 
+  it("GET /v1/lookup/:selector — malformed selector → 400 INVALID_ARGS", async () => {
+    const res = await app.request("/v1/lookup/0x123");
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("INVALID_ARGS");
+  });
+
+  it("GET /v1/lookup/:selector — unknown selector → 200 with empty entries", async () => {
+    const res = await app.request("/v1/lookup/0x00000000");
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ selector: "0x00000000", entries: [] });
+  });
+
+  it("GET /v1/lookup/:selector — returns seeded registry entries (incl. 32-byte event topics)", async () => {
+    const { registry } = await import("../src/registry/store.js");
+    registry.recordProven({ selector: "0x70a08231", kind: "function", signature: "balanceOf(address)" });
+    const res = await app.request("/v1/lookup/0x70A08231"); // case-insensitive
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.entries).toContainEqual({ kind: "function", signature: "balanceOf(address)", proof: "keccak-proven" });
+  });
+
+  it("GET /v1/registry/stats → 200 with counts", async () => {
+    const res = await app.request("/v1/registry/stats");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toHaveProperty("selectors");
+    expect(body).toHaveProperty("bytecodes");
+  });
+
   it("sets rate-limit headers on API routes", async () => {
     const res = await app.request("/v1/ethereum/notanaddress/abi");
     expect(res.headers.get("ratelimit-limit")).toBe("120");

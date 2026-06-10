@@ -70,13 +70,21 @@ class SqliteStore implements Store {
   set(key: string, value: string, ttlSeconds: number): void {
     this.setStmt.run(key, value, Date.now() + ttlSeconds * 1000);
   }
+  handle(): any {
+    return this.db;
+  }
 }
+
+/** The shared DatabaseSync handle, so other modules (the registry) can add their
+ * own tables to the same DB file without a second connection (avoids locking). */
+let sharedDb: any = null;
 
 function makeStore(): Store {
   const path = process.env.CACHE_DB_PATH;
   if (path) {
     try {
       const s = new SqliteStore(path);
+      sharedDb = s.handle();
       console.log(`[cache] persistent SQLite store at ${path}`);
       return s;
     } catch (e) {
@@ -87,6 +95,11 @@ function makeStore(): Store {
 }
 
 const store = makeStore();
+
+/** The shared node:sqlite DatabaseSync, or null when running on the memory fallback. */
+export function getDb(): any {
+  return sharedDb;
+}
 
 /** Typed, namespaced view over the shared store. Values are JSON-serialized. */
 export class JsonCache<T> {

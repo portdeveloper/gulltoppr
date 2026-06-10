@@ -32,6 +32,8 @@ npm test               # vitest — unit tests (cache, chains, ladder helpers, a
 | `RATE_LIMIT` | `120` | per-IP requests per window (fixed window); `0` disables |
 | `RATE_LIMIT_WINDOW_SEC` | `60` | rate-limit window length |
 | `RATE_LIMIT_ALLOW` | _(empty)_ | comma-separated IP allowlist (exempt); private 6PN IPs are always exempt |
+| `ANTHROPIC_API_KEY` | _(empty)_ | enables the registry's LLM propose-and-verify pass on decompiles; empty disables |
+| `REGISTRY_LLM_MODEL` | `claude-opus-4-8` | model for propose-and-verify |
 
 ## Endpoints (SPEC §4)
 
@@ -44,6 +46,28 @@ npm test               # vitest — unit tests (cache, chains, ladder helpers, a
 | `prepare_tx` | `POST /v1/{chain}/{address}/prepare` — `{function, args, from, value?}` |
 | `decode_tx` | `GET /v1/{chain}/tx/{hash}` |
 | `resolve_name` | `GET /v1/{chain}/name/{name}` · `GET /v1/{chain}/name/by-address/{address}` |
+| registry lookup | `GET /v1/lookup/{selector}` — 4-byte (function/error) or 32-byte (event topic0), chain-independent |
+| registry stats | `GET /v1/registry/stats` |
+
+### The registry (selector commons)
+
+The engine seeds an open selector→signature registry as a byproduct of resolution:
+
+- Every **verified** resolution (Etherscan/Sourcify) harvests ground-truth
+  `selector → signature` pairs for functions, events (full 32-byte topic0 —
+  collision-free), and errors. Proof grade: `verified-source`.
+- Resolutions are also indexed by **skeleton hash** (runtime bytecode with the
+  solc metadata trailer stripped), so byte-identical clones resolve via a new
+  `bytecode-match` rung without re-running the ladder. Verified claims are
+  capped to `partial` for clones (this address's source was never verified).
+- Decompiled ABIs get `Unresolved_<selector>` names replaced from proven
+  registry entries, and (when `ANTHROPIC_API_KEY` is set) a fire-and-forget
+  **propose-and-verify** pass asks Claude for candidate signatures and accepts
+  only those where `keccak256(sig)[:4]` reproduces the selector — proof grade
+  `keccak-proven` (signature proven; semantics still inferred).
+
+Only the engine's own pipeline writes to the registry — no open submissions
+(that's how 4byte got collision-poisoned).
 
 `{chain}` is an alias (`ethereum`, `base`, `optimism`, `arbitrum`, `polygon`,
 `local`) or a numeric id. Pass `?rpc_url=` to override the RPC (required for chains

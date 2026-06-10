@@ -90,7 +90,7 @@ JSON Schema-ish; `?` = optional. These are shared by REST bodies and MCP tool I/
 ### 2.2 `Provenance` — first-class, on every ABI result
 ```jsonc
 {
-  "source": "etherscan" | "sourcify" | "proxy-impl" | "heimdall-decompiled" | "4byte",
+  "source": "etherscan" | "sourcify" | "proxy-impl" | "bytecode-match" | "heimdall-decompiled" | "4byte",
   "confidence": "verified" | "partial" | "decompiled" | "selector-only",
   "verified": true,                       // source code was verified onchain
   "names_synthetic": false,               // true ⇒ fn/param names may be Unresolved_0x…

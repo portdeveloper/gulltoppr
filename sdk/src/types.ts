@@ -11,7 +11,7 @@ import type { Abi, Address, Hex } from "viem";
 export type ChainInput = number | string;
 
 // §2.2
-export type ProvenanceSource = "etherscan" | "sourcify" | "proxy-impl" | "heimdall-decompiled" | "4byte";
+export type ProvenanceSource = "etherscan" | "sourcify" | "proxy-impl" | "bytecode-match" | "heimdall-decompiled" | "4byte";
 export type Confidence = "verified" | "partial" | "decompiled" | "selector-only";
 export interface Provenance {
   source: ProvenanceSource;

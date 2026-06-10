@@ -8,3 +8,4 @@ dist/
 # /revive session checkpoints (personal, not project state)
 REVIVE.md
 .revive-pending
+memory.md

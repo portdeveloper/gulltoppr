@@ -26,6 +26,10 @@ import { fromSourcify } from "./sourcify.js";
 import { detectProxy } from "./proxy.js";
 import { fromHeimdall } from "./heimdall.js";
 import { fromFourByte } from "./fourbyte.js";
+import { skeletonHash } from "../registry/normalize.js";
+import { registry } from "../registry/store.js";
+import { enrichDecompiledAbi } from "../registry/enrich.js";
+import { proposeAndVerify } from "../registry/propose.js";
 
 export function normalizeAddress(raw: string): Address {
   try {
@@ -35,62 +39,108 @@ export function normalizeAddress(raw: string): Address {
   }
 }
 
-/** Run the source rungs (no proxy logic) on a single address. */
+/** Run the source rungs (no proxy logic) on a single address.
+ * `knownCode` saves a getCode round-trip when the caller already fetched it. */
 async function resolveSource(
   client: PublicClient,
   chainId: number,
   address: Address,
   rpcUrl: string,
+  knownCode?: `0x${string}`,
 ): Promise<{ abi: Abi; provenance: Provenance; cached: boolean }> {
+  // Skeleton hash (metadata-stripped bytecode) — the registry's clone key.
+  const code = knownCode ?? (await client.getCode({ address }).catch(() => undefined));
+  const skeleton = code && code !== "0x" ? skeletonHash(code) : undefined;
+
+  const recordBytecode = (abi: Abi, p: Provenance) => {
+    if (!skeleton) return;
+    registry.recordBytecode({
+      skeleton_hash: skeleton,
+      abi,
+      source: p.source,
+      confidence: p.confidence,
+      names_synthetic: p.names_synthetic,
+      chain: chainId,
+      address,
+    });
+  };
+
   // Rung 1 — Etherscan v2.
   const es = await fromEtherscan(chainId, address);
   if (es) {
-    return {
-      abi: es.abi,
-      cached: false,
-      provenance: {
-        source: "etherscan",
-        confidence: "verified",
-        verified: true,
-        names_synthetic: false,
-        natspec: es.natspec,
-      },
+    const provenance: Provenance = {
+      source: "etherscan",
+      confidence: "verified",
+      verified: true,
+      names_synthetic: false,
+      natspec: es.natspec,
     };
+    registry.recordVerifiedAbi(chainId, address, es.abi); // seed the commons (ground truth)
+    recordBytecode(es.abi, provenance);
+    return { abi: es.abi, cached: false, provenance };
   }
 
   // Rung 2 — Sourcify.
   const sc = await fromSourcify(chainId, address);
   if (sc) {
     const confidence: Confidence = sc.match === "full" ? "verified" : "partial";
-    return {
-      abi: sc.abi,
-      cached: false,
-      provenance: {
-        source: "sourcify",
-        confidence,
-        verified: sc.match === "full",
-        names_synthetic: false,
-        natspec: true,
-        ...(sc.match === "partial" ? { notes: "Sourcify partial match." } : {}),
-      },
+    const provenance: Provenance = {
+      source: "sourcify",
+      confidence,
+      verified: sc.match === "full",
+      names_synthetic: false,
+      natspec: true,
+      ...(sc.match === "partial" ? { notes: "Sourcify partial match." } : {}),
     };
+    registry.recordVerifiedAbi(chainId, address, sc.abi); // names come from source either way
+    recordBytecode(sc.abi, provenance);
+    return { abi: sc.abi, cached: false, provenance };
   }
 
-  // Rung 4 — heimdall via gulltoppr (the moat).
+  // Rung 3.5 — bytecode match: an identical skeleton was resolved before
+  // (clone of a token/safe/factory product). Reuse its ABI; verified claims are
+  // capped to `partial` because *this* address's source was never verified.
+  if (skeleton) {
+    const hit = registry.getBytecode(skeleton);
+    if (hit) {
+      const enriched = hit.names_synthetic ? enrichDecompiledAbi(hit.abi) : { abi: hit.abi, recovered: 0 };
+      return {
+        abi: enriched.abi,
+        cached: true,
+        provenance: {
+          source: "bytecode-match",
+          confidence: hit.names_synthetic ? hit.confidence : "partial",
+          verified: false,
+          names_synthetic: hit.names_synthetic,
+          natspec: false,
+          notes:
+            `Identical runtime bytecode (metadata-stripped) previously resolved at ${hit.address} on chain ${hit.chain} ` +
+            `(${hit.source}/${hit.confidence}).` +
+            (enriched.recovered ? ` ${enriched.recovered} function name(s) recovered from the registry.` : ""),
+        },
+      };
+    }
+  }
+
+  // Rung 4 — heimdall via heimdall-api (the moat).
   const hd = await fromHeimdall(address, rpcUrl);
   if (hd) {
-    return {
-      abi: hd.abi,
-      cached: hd.cached,
-      provenance: {
-        source: "heimdall-decompiled",
-        confidence: "decompiled",
-        verified: false,
-        names_synthetic: true,
-        natspec: false,
-        notes: "Decompiled by heimdall; function/param names are inferred — verify intent before acting.",
-      },
+    const enriched = enrichDecompiledAbi(hd.abi); // proven registry names replace Unresolved_*
+    const provenance: Provenance = {
+      source: "heimdall-decompiled",
+      confidence: "decompiled",
+      verified: false,
+      names_synthetic: true,
+      natspec: false,
+      notes:
+        "Decompiled by heimdall; function/param names are inferred — verify intent before acting." +
+        (enriched.recovered ? ` ${enriched.recovered} function name(s) recovered from the registry (signature-proven).` : ""),
     };
+    recordBytecode(enriched.abi, provenance);
+    // Fire-and-forget: LLM propose-and-verify on still-unresolved selectors
+    // (env-gated; no-op without ANTHROPIC_API_KEY). Never blocks the response.
+    proposeAndVerify(enriched.abi, { chain: chainId, address }).catch(() => {});
+    return { abi: enriched.abi, cached: hd.cached, provenance };
   }
 
   // Rung 5 — 4byte selector DB (currently stubbed).
@@ -155,7 +205,7 @@ export async function resolveAbiInternal(
   const proxy = await detectProxy(client, address);
   const target = proxy ? proxy.implementation : address;
 
-  const src = await resolveSource(client, resolved.id, target, resolved.rpcUrl);
+  const src = await resolveSource(client, resolved.id, target, resolved.rpcUrl, target === address ? code : undefined);
 
   let provenance = src.provenance;
   let proxyChain: ProxyChain | undefined;

@@ -10,6 +10,7 @@ export type ProvenanceSource =
   | "etherscan"
   | "sourcify"
   | "proxy-impl"
+  | "bytecode-match"
   | "heimdall-decompiled"
   | "4byte";
 
