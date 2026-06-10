@@ -1,0 +1,17 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.portdeveloper/gulltoppr",
+  "title": "Gulltoppr",
+  "description": "Resolve any EVM contract ABI (even unverified, via decompilation), read, simulate, prepare txs.",
+  "repository": {
+    "url": "https://github.com/portdeveloper/gulltoppr",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://gulltoppr-mcp.fly.dev/mcp"
+    }
+  ]
+}
