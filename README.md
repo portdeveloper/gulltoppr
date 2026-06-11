@@ -1,5 +1,9 @@
 # 🐴 gulltoppr
 
+![An agent resolving a live unverified MEV bot via gulltoppr — decompiled ABI, provenance warning, registry-proven name, live read](assets/demo.gif)
+
+*A real session: an unverified MEV bot that traded seconds earlier — no source, no ABI anywhere — resolved to a full interface in two MCP tool calls.*
+
 The REST engine for **abi.ninja-for-agents** — the resolution ladder + verb surface
 that lets an AI agent go from `(chain, address)` to a correct, simulated, safe
 contract interaction. This is "the engine" of the four faces (REST → MCP → SDK →

@@ -74,6 +74,15 @@
       </header>
 
       <section>
+        <h2>Watch an agent do it</h2>
+        <img src="demo.gif" alt="An agent resolving a live unverified MEV bot via the gulltoppr MCP — decompiled ABI with provenance warning and a live read"
+             style="width:100%;border:1px solid var(--line);border-radius:14px;display:block" loading="lazy" />
+        <p class="meta">A real session: an <b>unverified</b> MEV bot that traded seconds earlier — no source on
+          Etherscan, nothing on 4byte — resolved to a full interface in two MCP tool calls, with provenance the
+          agent can reason about. Try the same contract yourself below.</p>
+      </section>
+
+      <section>
         <h2>Try it — resolve any contract</h2>
         <div class="panel">
           <div class="row">
@@ -139,6 +148,7 @@ const tx = await g.prepareTx("base", addr, "transfer",
       const API = "https://gulltoppr.fly.dev";
       const $ = (id) => document.getElementById(id);
       const examples = [
+        { label: "⚠ MEV bot — unverified!", chain: "ethereum", addr: "0xbdb3ba9ffe392549e1f8658dd2630c141fdf47b6" },
         { label: "DAI (ethereum)", chain: "ethereum", addr: "0x6B175474E89094C44Da98b954EedeAC495271d0F" },
         { label: "USDC (base)", chain: "base", addr: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" },
         { label: "WETH (ethereum)", chain: "ethereum", addr: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2" },
