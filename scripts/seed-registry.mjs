@@ -50,10 +50,20 @@ async function topContracts(chain) {
       }
     } catch { /* skip bad block fetch */ }
   }
-  return [...counts.entries()]
+  const top = [...counts.entries()]
     .sort((a, b) => b[1] - a[1])
-    .slice(0, PER_CHAIN)
+    .slice(0, PER_CHAIN * 2)
     .map(([addr, n]) => ({ addr, n }));
+  // drop EOAs (plain transfers) — they'd just burn an engine call on ABI_NOT_FOUND
+  const contracts = [];
+  for (const c of top) {
+    if (contracts.length >= PER_CHAIN) break;
+    try {
+      const code = await rpc(url, "eth_getCode", [c.addr, "latest"]);
+      if (code && code !== "0x") contracts.push(c);
+    } catch { /* keep it; the engine will decide */ contracts.push(c); }
+  }
+  return contracts;
 }
 
 async function stats() {
