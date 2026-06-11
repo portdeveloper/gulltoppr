@@ -143,11 +143,13 @@ async function resolveSource(
     return { abi: enriched.abi, cached: hd.cached, provenance };
   }
 
-  // Rung 5 — 4byte selector DB (currently stubbed).
-  const fb = await fromFourByte(address, rpcUrl);
+  // Rung 5 — selector-level fallback: dispatcher PUSH4 scan, named registry-first
+  // (proven), then 4byte.directory (unproven). Fires only when heimdall fails.
+  const fb = await fromFourByte(code);
   if (fb) {
+    const { registry: nReg, fourbyte: n4b, unresolved: nUn } = fb.counts;
     return {
-      abi: fb,
+      abi: fb.abi,
       cached: false,
       provenance: {
         source: "4byte",
@@ -155,7 +157,9 @@ async function resolveSource(
         verified: false,
         names_synthetic: true,
         natspec: false,
-        notes: "Per-function selector matches only; not a full ABI.",
+        notes:
+          `Selector-level only — not a full ABI (mutability/outputs unknown). Names: ${nReg} proven from the registry, ` +
+          `${n4b} from 4byte.directory (unproven, may be misleading), ${nUn} unresolved.`,
       },
     };
   }
@@ -268,7 +272,14 @@ export async function resolveAbi(
   const key = `${resolved.id}:${address}`;
 
   const hit = abiCache.get(key);
-  if (hit) return { ...hit, cached: true };
+  if (hit) {
+    // Cache hits still feed the selector commons: entries cached before the
+    // registry existed would otherwise never be harvested. Idempotent
+    // (INSERT OR IGNORE) and needs no RPC; the bytecode index is skipped here
+    // because it would require a getCode round-trip.
+    if (!hit.provenance.names_synthetic) registry.recordVerifiedAbi(hit.chain, address, hit.abi);
+    return { ...hit, cached: true };
+  }
 
   const r = await resolveAbiInternal(chainInput, rawAddress, rpcOverride);
   const token = await detectToken(r.client, address);
