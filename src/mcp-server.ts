@@ -58,7 +58,7 @@ const opts = (rpcUrl?: string) => (rpcUrl ? { rpcUrl } : undefined);
 
 /** Build a fully-configured MCP server (all 7 verb tools registered). */
 export function createMcpServer(): McpServer {
-  const server = new McpServer({ name: "gulltoppr", version: "0.1.0" });
+  const server = new McpServer({ name: "gulltoppr", version: "0.1.1" });
 
   server.registerTool(
     "resolve_abi",

@@ -1,4 +1,4 @@
-# gulltoppr
+# 🐴 gulltoppr
 
 Typed TypeScript client for the [gulltoppr](../README.md) — resolve any
 contract's ABI (verified *or* unverified, via the heimdall decompile rung) and

@@ -1,4 +1,4 @@
-# gulltoppr
+# 🐴 gulltoppr
 
 The REST engine for **abi.ninja-for-agents** — the resolution ladder + verb surface
 that lets an AI agent go from `(chain, address)` to a correct, simulated, safe
