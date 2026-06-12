@@ -56,6 +56,16 @@ describe("HTTP layer", () => {
     expect(body.entries).toContainEqual({ kind: "function", signature: "balanceOf(address)", proof: "keccak-proven" });
   });
 
+  it("GET /v1/registry/export → JSONL with seeded entries", async () => {
+    const { registry } = await import("../src/registry/store.js");
+    registry.recordProven({ selector: "0xdead0001", kind: "function", signature: "exportMe(uint256)" });
+    const res = await app.request("/v1/registry/export");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("ndjson");
+    const lines = (await res.text()).trim().split("\n").map((l) => JSON.parse(l));
+    expect(lines).toContainEqual(expect.objectContaining({ selector: "0xdead0001", signature: "exportMe(uint256)", proof: "keccak-proven" }));
+  });
+
   it("GET /v1/registry/stats → 200 with counts", async () => {
     const res = await app.request("/v1/registry/stats");
     expect(res.status).toBe(200);

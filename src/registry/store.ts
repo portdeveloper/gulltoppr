@@ -49,6 +49,7 @@ export interface BytecodeEntry {
 interface Backend {
   insertSelector(e: SelectorEntry): void;
   lookupSelector(selector: string): SelectorEntry[];
+  exportSelectors(): SelectorEntry[];
   getBytecode(hash: string): BytecodeEntry | undefined;
   setBytecode(e: BytecodeEntry): void;
   stats(): { selectors: Record<string, number>; bytecodes: number };
@@ -97,8 +98,8 @@ class SqliteBackend implements Backend {
   insertSelector(e: SelectorEntry): void {
     this.ins.run(e.selector, e.kind, e.signature, e.proof, e.abi_item ? JSON.stringify(e.abi_item) : null, e.chain ?? null, e.address ?? null, Date.now());
   }
-  lookupSelector(selector: string): SelectorEntry[] {
-    return (this.sel.all(selector) as any[]).map((r) => ({
+  private rowToEntry(r: any): SelectorEntry {
+    return {
       selector: r.selector,
       kind: r.kind,
       signature: r.signature,
@@ -106,7 +107,14 @@ class SqliteBackend implements Backend {
       ...(r.abi_json ? { abi_item: JSON.parse(r.abi_json) } : {}),
       ...(r.chain != null ? { chain: Number(r.chain) } : {}),
       ...(r.address ? { address: r.address } : {}),
-    }));
+    };
+  }
+  lookupSelector(selector: string): SelectorEntry[] {
+    return (this.sel.all(selector) as any[]).map((r) => this.rowToEntry(r));
+  }
+  exportSelectors(): SelectorEntry[] {
+    const rows = this.db.prepare("SELECT * FROM registry_selectors ORDER BY kind, selector, signature").all() as any[];
+    return rows.map((r) => this.rowToEntry(r));
   }
   getBytecode(hash: string): BytecodeEntry | undefined {
     const r = this.bcGet.get(hash) as any;
@@ -144,6 +152,11 @@ class MemoryBackend implements Backend {
   }
   lookupSelector(selector: string): SelectorEntry[] {
     return this.selectors.get(selector) ?? [];
+  }
+  exportSelectors(): SelectorEntry[] {
+    return [...this.selectors.values()]
+      .flat()
+      .sort((a, b) => a.kind.localeCompare(b.kind) || a.selector.localeCompare(b.selector) || a.signature.localeCompare(b.signature));
   }
   getBytecode(hash: string): BytecodeEntry | undefined {
     return this.bytecodes.get(hash);
@@ -247,6 +260,11 @@ export class Registry {
 
   stats(): { selectors: Record<string, number>; bytecodes: number } {
     return this.backend.stats();
+  }
+
+  /** Full deterministic dump of the selector commons (for the CC0 export). */
+  exportSelectors(): SelectorEntry[] {
+    return this.backend.exportSelectors();
   }
 }
 

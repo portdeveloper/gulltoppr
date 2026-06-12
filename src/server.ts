@@ -74,6 +74,13 @@ app.get("/v1/lookup/:selector", async (c) => {
 
 app.get("/v1/registry/stats", async (c) => send(c, registry.stats()));
 
+// Full dump of the selector commons as JSONL — feeds the CC0 dataset
+// (github.com/portdeveloper/evm-abi-commons). Deterministic ordering.
+app.get("/v1/registry/export", async (c) => {
+  const lines = registry.exportSelectors().map((e) => safeStringify(e)).join("\n");
+  return c.body(lines + (lines ? "\n" : ""), 200, { "content-type": "application/x-ndjson; charset=utf-8" });
+});
+
 // resolve_abi
 app.get("/v1/:chain/:address/abi", async (c) => {
   const result = await resolveAbi(c.req.param("chain"), c.req.param("address"), rpc(c));
