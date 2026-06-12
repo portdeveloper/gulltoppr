@@ -73,6 +73,10 @@ The engine seeds an open selector→signature registry as a byproduct of resolut
 Only the engine's own pipeline writes to the registry — no open submissions
 (that's how 4byte got collision-poisoned).
 
+The accumulated data is published as a **CC0 dataset**:
+[`evm-abi-commons`](https://github.com/portdeveloper/evm-abi-commons)
+(regenerate any time from `GET /v1/registry/export`).
+
 `{chain}` is an alias (`ethereum`, `base`, `optimism`, `arbitrum`, `polygon`,
 `local`) or a numeric id. Pass `?rpc_url=` to override the RPC (required for chains
 with no default, e.g. `local`/31337).
