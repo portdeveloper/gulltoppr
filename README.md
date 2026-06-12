@@ -119,11 +119,11 @@ Tools: `resolve_abi`, `read_contract`, `encode_call`, `simulate`, `prepare_tx`,
 ### Remote (Streamable HTTP)
 
 For agents that can't run a local stdio server, the same MCP is hosted over HTTP at
-**https://gulltoppr-mcp.fly.dev/mcp** (`npm run mcp:http` locally; stateless). Point
+**https://mcp.gulltoppr.dev/mcp** (`npm run mcp:http` locally; stateless). Point
 an HTTP-capable MCP client at that URL:
 
 ```json
-{ "mcpServers": { "gulltoppr": { "url": "https://gulltoppr-mcp.fly.dev/mcp" } } }
+{ "mcpServers": { "gulltoppr": { "url": "https://mcp.gulltoppr.dev/mcp" } } }
 ```
 
 Tool registration is shared (`src/mcp-server.ts`) between the stdio entry (`mcp.ts`)
@@ -138,7 +138,7 @@ refactoring abi.ninja's frontend onto a shared client. See [`sdk/README.md`](sdk
 
 ## Deploy
 
-Live at **https://gulltoppr.fly.dev** (Fly.io, region `cdg` — co-located with
+Live at **https://api.gulltoppr.dev** (Fly.io app `gulltoppr`, region `cdg` — co-located with
 gulltoppr to minimize ladder rung-4 latency). Containerized via the `Dockerfile`
 (Node 22, run with `tsx`; ~82 MB image), configured by `fly.toml`.
 

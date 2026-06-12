@@ -7,11 +7,11 @@
     "url": "https://github.com/portdeveloper/gulltoppr",
     "source": "github"
   },
-  "version": "0.1.1",
+  "version": "0.1.2",
   "remotes": [
     {
       "type": "streamable-http",
-      "url": "https://gulltoppr-mcp.fly.dev/mcp"
+      "url": "https://mcp.gulltoppr.dev/mcp"
     }
   ]
 }

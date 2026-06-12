@@ -15,7 +15,7 @@ npm install gulltoppr viem
 import { AbiNinja } from "gulltoppr";
 
 // baseUrl defaults to the live engine; pass it only to override.
-const ninja = new AbiNinja({ baseUrl: "https://gulltoppr.fly.dev" });
+const ninja = new AbiNinja({ baseUrl: "https://api.gulltoppr.dev" });
 
 // Resolve — ABI is secondary; the capability manifest + provenance are the point.
 const r = await ninja.resolveAbi("base", "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913");

@@ -2,7 +2,7 @@
 /**
  * Generate the hero-demo asciinema cast (assets/demo.cast) — an agent resolving
  * a LIVE unverified contract through the gulltoppr MCP. Every output line below
- * is from a real session against gulltoppr-mcp.fly.dev (contract 0xBdb3…47B6,
+ * is from a real session against mcp.gulltoppr.dev (contract 0xBdb3…47B6,
  * an unverified MEV bot that traded in block 25294776); only pacing is staged.
  * Render: agg --font-size 16 assets/demo.cast assets/demo.gif
  */
@@ -76,7 +76,7 @@ pause(0.5);
 line(dim("  Etherscan ABI: ") + red("✗") + dim("   4byte: ") + red("✗") + dim("   ") + bold("🐴 gulltoppr: ") + green("✓"));
 pause(0.8);
 line();
-line(dim('  { "mcpServers": { "gulltoppr": { "url": "https://gulltoppr-mcp.fly.dev/mcp" } } }'));
+line(dim('  { "mcpServers": { "gulltoppr": { "url": "https://mcp.gulltoppr.dev/mcp" } } }'));
 pause(3.5);
 
 const header = { version: 2, width: W, height: H, title: "gulltoppr — resolve an unverified contract", env: { TERM: "xterm-256color" } };

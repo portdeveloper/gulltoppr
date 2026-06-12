@@ -244,8 +244,8 @@ Canonical agent workflow (the Skill teaches this):
 
 ## 4. REST contract
 
-Base: `https://gulltoppr.fly.dev/v1` (live). `api.abi.ninja` is the intended
-custom domain but isn't mapped yet (needs abi.ninja maintainer coordination). JSON in/out, UTF-8.
+Base: `https://api.gulltoppr.dev/v1` (live; `gulltoppr.fly.dev` remains as an
+alias). JSON in/out, UTF-8.
 `chain` is always a path segment so URLs are cache-key-friendly and CDN-shardable.
 
 | Verb | Method + path | Body / query |

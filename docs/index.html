@@ -69,7 +69,7 @@
         <div class="cta">
           <a class="btn primary" href="https://github.com/portdeveloper/gulltoppr">GitHub</a>
           <a class="btn" href="https://www.npmjs.com/package/gulltoppr">npm</a>
-          <a class="btn" href="https://gulltoppr-mcp.fly.dev/mcp">MCP endpoint</a>
+          <a class="btn" href="https://mcp.gulltoppr.dev/mcp">MCP endpoint</a>
         </div>
       </header>
 
@@ -99,13 +99,13 @@
           <div class="chips" id="chips"></div>
           <div id="out"></div>
         </div>
-        <p class="meta">Calls the live engine at <code>gulltoppr.fly.dev</code> directly from your browser.
+        <p class="meta">Calls the live engine at <code>api.gulltoppr.dev</code> directly from your browser.
           Paste an <b>unverified</b> contract — it still resolves (and tells you the ABI was decompiled).</p>
       </section>
 
       <section>
         <h2>Use it from an agent (MCP)</h2>
-        <pre>{ "mcpServers": { "gulltoppr": { "url": "https://gulltoppr-mcp.fly.dev/mcp" } } }</pre>
+        <pre>{ "mcpServers": { "gulltoppr": { "url": "https://mcp.gulltoppr.dev/mcp" } } }</pre>
         <div class="grid2">
           <div>
             <h2>…or from code (SDK)</h2>
@@ -123,7 +123,7 @@ const tx = await g.prepareTx("base", addr, "transfer",
           </div>
           <div>
             <h2>…or plain REST</h2>
-            <pre>curl https://gulltoppr.fly.dev/v1/base/0x833…2913/abi
+            <pre>curl https://api.gulltoppr.dev/v1/base/0x833…2913/abi
 
 # verbs: resolve_abi · read_contract · encode_call
 #        simulate · prepare_tx · decode_tx · resolve_name</pre>
@@ -138,7 +138,7 @@ const tx = await g.prepareTx("base", addr, "transfer",
         gulltoppr · non-custodial · open source ·
         <a href="https://github.com/portdeveloper/gulltoppr">repo</a> ·
         <a href="https://www.npmjs.com/package/gulltoppr">npm</a> ·
-        <a href="https://gulltoppr.fly.dev/">engine</a> ·
+        <a href="https://api.gulltoppr.dev/">engine</a> ·
         <a href="https://github.com/portdeveloper/heimdall-api">heimdall-api</a> ·
         <a href="https://github.com/portdeveloper/evm-abi-commons">evm-abi-commons (CC0)</a>
         <br />rides <a href="https://github.com/Jon-Becker/heimdall-rs">heimdall-rs</a> to reach any contract.
@@ -146,7 +146,7 @@ const tx = await g.prepareTx("base", addr, "transfer",
     </div>
 
     <script>
-      const API = "https://gulltoppr.fly.dev";
+      const API = "https://api.gulltoppr.dev";
       const $ = (id) => document.getElementById(id);
       const examples = [
         { label: "⚠ MEV bot — unverified!", chain: "ethereum", addr: "0xbdb3ba9ffe392549e1f8658dd2630c141fdf47b6" },

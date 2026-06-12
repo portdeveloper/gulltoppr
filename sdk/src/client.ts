@@ -18,7 +18,7 @@ import type {
 } from "./types.js";
 
 export interface AbiNinjaOptions {
-  /** Engine base URL. Default: https://gulltoppr.fly.dev */
+  /** Engine base URL. Default: https://api.gulltoppr.dev */
   baseUrl?: string;
   /** Inject a custom fetch (tests, Node < 18, proxies). Default: global fetch. */
   fetch?: typeof globalThis.fetch;
@@ -49,7 +49,7 @@ export class AbiNinja {
   private readonly headers: Record<string, string>;
 
   constructor(opts: AbiNinjaOptions = {}) {
-    this.baseUrl = (opts.baseUrl ?? "https://gulltoppr.fly.dev").replace(/\/$/, "");
+    this.baseUrl = (opts.baseUrl ?? "https://api.gulltoppr.dev").replace(/\/$/, "");
     if (!opts.fetch && !globalThis.fetch) {
       throw new Error("No fetch available; pass { fetch } in AbiNinjaOptions.");
     }

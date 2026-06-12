@@ -69,7 +69,7 @@ tools `resolve_abi`, `read_contract`, `encode_call`, `simulate`, `prepare_tx`,
 
 ```ts
 import { AbiNinja } from "gulltoppr";
-const ninja = new AbiNinja({ baseUrl: "https://gulltoppr.fly.dev" });
+const ninja = new AbiNinja({ baseUrl: "https://api.gulltoppr.dev" });
 
 const r = await ninja.resolveAbi("base", "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913");
 if (r.provenance.names_synthetic) { /* warn the user: names are inferred */ }

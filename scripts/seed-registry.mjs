@@ -10,7 +10,7 @@
  *
  *   node scripts/seed-registry.mjs [perChain=120]
  */
-const ENGINE = "https://gulltoppr.fly.dev";
+const ENGINE = "https://api.gulltoppr.dev";
 const PER_CHAIN = Number(process.argv[2]) || 120;
 const BLOCKS = { ethereum: 40, base: 120, optimism: 120, arbitrum: 240, polygon: 120 };
 const RPCS = {

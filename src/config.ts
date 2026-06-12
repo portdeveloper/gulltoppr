@@ -22,7 +22,7 @@ export const config = {
 
   /** The deployed REST engine. The MCP server thin-clients this (shares its cache +
    * Etherscan key) instead of resolving in-process. */
-  engineUrl: envString("ENGINE_URL", "https://gulltoppr.fly.dev"),
+  engineUrl: envString("ENGINE_URL", "https://api.gulltoppr.dev"),
 
   /** Single multichain Etherscan v2 key (ladder rung 1). Empty disables rung 1. */
   etherscanApiKey: envString("ETHERSCAN_API_KEY", ""),
