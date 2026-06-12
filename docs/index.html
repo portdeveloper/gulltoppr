@@ -3,11 +3,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>gulltoppr — interact with any contract on any EVM chain</title>
+    <title>gulltoppr: interact with any contract on any EVM chain</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐴</text></svg>" />
-    <meta name="description" content="Let AI agents interact with any smart contract on any EVM chain — resolve ABIs (even unverified, via decompilation), read, simulate, and prepare safe non-custodial transactions. REST + MCP + SDK." />
+    <meta name="description" content="Let AI agents interact with any smart contract on any EVM chain: resolve ABIs (even unverified, via decompilation), read, simulate, and prepare safe non-custodial transactions. REST + MCP + SDK." />
     <meta property="og:title" content="gulltoppr" />
-    <meta property="og:description" content="The universal, safe, agent-native interface to any EVM contract — including the ones nobody verified." />
+    <meta property="og:description" content="The universal, safe, agent-native interface to any EVM contract, including the ones nobody verified." />
     <style>
       :root {
         --bg: #0b0e14; --panel: #131822; --panel2: #1a2130; --line: #232c3d;
@@ -62,7 +62,7 @@
         <div class="logo">🐴 gulltoppr<span class="n">.</span></div>
         <div class="tag">Interact with <b>any</b> contract on <b>any</b> EVM chain.</div>
         <p class="sub">
-          The universal, safe, agent-native interface to any EVM contract — including the ones
+          The universal, safe, agent-native interface to any EVM contract, including the ones
           nobody verified. Resolve an ABI (even from raw bytecode, via decompilation), read,
           simulate, and prepare <b>non-custodial</b> transactions. Built for AI agents: MCP + SDK + REST.
         </p>
@@ -75,15 +75,15 @@
 
       <section>
         <h2>Watch an agent do it</h2>
-        <img src="demo.gif" alt="An agent resolving a live unverified MEV bot via the gulltoppr MCP — decompiled ABI with provenance warning and a live read"
+        <img src="demo.gif" alt="An agent resolving a live unverified MEV bot via the gulltoppr MCP: decompiled ABI with provenance warning and a live read"
              style="width:100%;border:1px solid var(--line);border-radius:14px;display:block" loading="lazy" />
-        <p class="meta">A real session: an <b>unverified</b> MEV bot that traded seconds earlier — no source on
-          Etherscan, nothing on 4byte — resolved to a full interface in two MCP tool calls, with provenance the
+        <p class="meta">A real session: an <b>unverified</b> MEV bot that traded seconds earlier (no source on
+          Etherscan, nothing on 4byte) resolved to a full interface in two MCP tool calls, with provenance the
           agent can reason about. Try the same contract yourself below.</p>
       </section>
 
       <section>
-        <h2>Try it — resolve any contract</h2>
+        <h2>Try it: resolve any contract</h2>
         <div class="panel">
           <div class="row">
             <select id="chain">
@@ -100,7 +100,7 @@
           <div id="out"></div>
         </div>
         <p class="meta">Calls the live engine at <code>api.gulltoppr.dev</code> directly from your browser.
-          Paste an <b>unverified</b> contract — it still resolves (and tells you the ABI was decompiled).</p>
+          Paste an <b>unverified</b> contract; it still resolves (and tells you the ABI was decompiled).</p>
       </section>
 
       <section>
@@ -149,7 +149,7 @@ const tx = await g.prepareTx("base", addr, "transfer",
       const API = "https://api.gulltoppr.dev";
       const $ = (id) => document.getElementById(id);
       const examples = [
-        { label: "⚠ MEV bot — unverified!", chain: "ethereum", addr: "0xbdb3ba9ffe392549e1f8658dd2630c141fdf47b6" },
+        { label: "⚠ MEV bot (unverified!)", chain: "ethereum", addr: "0xbdb3ba9ffe392549e1f8658dd2630c141fdf47b6" },
         { label: "DAI (ethereum)", chain: "ethereum", addr: "0x6B175474E89094C44Da98b954EedeAC495271d0F" },
         { label: "USDC (base)", chain: "base", addr: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" },
         { label: "WETH (ethereum)", chain: "ethereum", addr: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2" },
@@ -185,7 +185,7 @@ const tx = await g.prepareTx("base", addr, "transfer",
           const proxy = data.proxy ? ` · ${esc(data.proxy.pattern)} proxy → impl <code>${esc(data.abi_for.slice(0, 10))}…</code>` : "";
           out.innerHTML =
             `<div>${badge} <span class="meta">source: ${esc(p.source)}${tok}${proxy}${data.cached ? " · cached" : ""}</span></div>` +
-            (p.names_synthetic ? `<p class="meta" style="color:var(--warn)">⚠ Decompiled — function/param names are inferred. ${esc(p.notes || "")}</p>` : "") +
+            (p.names_synthetic ? `<p class="meta" style="color:var(--warn)">⚠ Decompiled: function/param names are inferred. ${esc(p.notes || "")}</p>` : "") +
             `<div class="fns"><div><h3>Read (${data.interface.reads.length})</h3>${list(data.interface.reads)}</div>` +
             `<div><h3>Write (${data.interface.writes.length})</h3>${list(data.interface.writes)}</div></div>`;
         } catch (e) {
