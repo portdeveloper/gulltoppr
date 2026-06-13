@@ -10,7 +10,7 @@ description: >-
   Non-custodial: this never signs or sends; it hands the user a tx to sign.
 ---
 
-# abi.ninja: interacting with smart contracts
+# gulltoppr: interacting with smart contracts
 
 This skill turns "(chain, address) + intent" into a correct on-chain read or a
 **safe, simulated, ready-to-sign transaction**. The engine resolves an ABI even when

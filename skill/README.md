@@ -1,4 +1,4 @@
-# abi.ninja Skill
+# gulltoppr Skill
 
 The fourth face (after the REST engine, MCP server, and SDK): a **Claude Skill** that
 teaches an agent the contract-interaction workflow (resolve → check provenance →

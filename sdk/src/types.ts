@@ -1,5 +1,5 @@
 /**
- * Public wire types — the JSON the abi.ninja engine returns (SPEC.md §2). These
+ * Public wire types: the JSON the gulltoppr engine returns (SPEC.md §2). These
  * mirror the engine's `src/types.ts`; SPEC is the shared source of truth. Primitive
  * onchain types come from viem so consumers get the same branded `Address`/`Hex`.
  *

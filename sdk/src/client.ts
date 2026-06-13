@@ -1,5 +1,5 @@
 /**
- * AbiNinja — typed client for the abi.ninja engine REST surface (SPEC §4).
+ * AbiNinja: typed client for the gulltoppr engine REST surface (SPEC §4).
  *
  * Low-level verbs mirror the seven engine verbs 1:1. A `contract()` helper gives a
  * viem-flavoured ergonomic surface (resolve once, then read/encode/prepare).
@@ -62,17 +62,17 @@ export class AbiNinja {
 
   // ── verbs ───────────────────────────────────────────────────────────────────
 
-  /** resolve_abi — ABI + capability manifest + provenance + proxy chain. */
+  /** resolve_abi: ABI + capability manifest + provenance + proxy chain. */
   resolveAbi(chain: ChainInput, address: Address, opts?: CallOpts): Promise<AbiResult> {
     return this.get(`/v1/${enc(chain)}/${address}/abi`, opts);
   }
 
-  /** read_contract — call a view/pure function, get the decoded result. */
+  /** read_contract: call a view/pure function, get the decoded result. */
   read(chain: ChainInput, address: Address, fn: string, args: unknown[] = [], opts?: CallOpts): Promise<ReadResult> {
     return this.post(`/v1/${enc(chain)}/${address}/read`, { function: fn, args }, opts);
   }
 
-  /** encode_call — function + args → calldata. */
+  /** encode_call: function + args → calldata. */
   encode(
     chain: ChainInput,
     address: Address,
@@ -83,12 +83,12 @@ export class AbiNinja {
     return this.post(`/v1/${enc(chain)}/${address}/encode`, { function: fn, args, value: opts?.value }, opts);
   }
 
-  /** simulate — high-level {address,function,args} or raw {to,data}. */
+  /** simulate: high-level {address,function,args} or raw {to,data}. */
   simulate(chain: ChainInput, args: SimulateArgs, opts?: CallOpts): Promise<Simulation> {
     return this.post(`/v1/${enc(chain)}/simulate`, args, opts);
   }
 
-  /** prepare_tx — the non-custodial hand-off: unsigned tx + simulation + summary + deeplink. */
+  /** prepare_tx, the non-custodial hand-off: unsigned tx + simulation + summary + deeplink. */
   prepareTx(
     chain: ChainInput,
     address: Address,
@@ -99,12 +99,12 @@ export class AbiNinja {
     return this.post(`/v1/${enc(chain)}/${address}/prepare`, { function: fn, args, from: opts.from, value: opts.value }, opts);
   }
 
-  /** decode_tx — "explain what this tx did." */
+  /** decode_tx: "explain what this tx did." */
   decodeTx(chain: ChainInput, txHash: string, opts?: CallOpts): Promise<DecodeTxResult> {
     return this.get(`/v1/${enc(chain)}/tx/${txHash}`, opts);
   }
 
-  /** resolve_name — ENS name → address, or address → primary ENS name. */
+  /** resolve_name: ENS name → address, or address → primary ENS name. */
   resolveName(nameOrAddress: string, chain: ChainInput = "ethereum"): Promise<ResolveNameResult> {
     const isAddr = /^0x[0-9a-fA-F]{40}$/.test(nameOrAddress);
     const path = isAddr
@@ -161,7 +161,7 @@ export class AbiNinja {
   }
 }
 
-/** A resolved-on-demand handle to one contract — viem `getContract` flavour. */
+/** A resolved-on-demand handle to one contract, viem `getContract` flavour. */
 export class Contract {
   private resolved?: Promise<AbiResult>;
 

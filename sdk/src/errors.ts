@@ -1,5 +1,5 @@
 /**
- * Client-side error — mirrors the engine's error envelope (SPEC §7). Carries the
+ * Client-side error: mirrors the engine's error envelope (SPEC §7). Carries the
  * stable machine `code` so callers can branch on it (e.g. retry on RPC_ERROR,
  * surface AMBIGUOUS_FUNCTION candidates).
  */
