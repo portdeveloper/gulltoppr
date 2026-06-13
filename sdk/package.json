@@ -1,6 +1,6 @@
 {
   "name": "gulltoppr",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Typed client for gulltoppr: let agents interact with any contract on any EVM chain. Resolve ABIs (even unverified), read, simulate, and prepare safe non-custodial transactions.",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,15 +12,31 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
   },
-  "keywords": ["ethereum", "abi", "evm", "viem", "smart-contracts", "agents", "gulltoppr", "mcp"],
+  "keywords": [
+    "ethereum",
+    "abi",
+    "evm",
+    "viem",
+    "smart-contracts",
+    "agents",
+    "gulltoppr",
+    "mcp"
+  ],
   "homepage": "https://github.com/portdeveloper/gulltoppr",
-  "repository": { "type": "git", "url": "git+https://github.com/portdeveloper/gulltoppr.git", "directory": "sdk" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/portdeveloper/gulltoppr.git",
+    "directory": "sdk"
+  },
   "license": "MIT",
   "peerDependencies": {
     "viem": "^2"
