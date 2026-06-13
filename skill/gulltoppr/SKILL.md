@@ -1,16 +1,16 @@
 ---
 name: gulltoppr
 description: >-
-  Interact with any smart contract on any EVM chain — resolve its ABI (even for
+  Interact with any smart contract on any EVM chain: resolve its ABI (even for
   UNVERIFIED contracts, via heimdall decompilation), read on-chain state, or prepare
   a safe, simulated, ready-to-sign transaction for the user. Use whenever someone
-  wants to call, read, query, inspect, or transact with a contract by address — e.g.
+  wants to call, read, query, inspect, or transact with a contract by address, e.g.
   "what's the USDC balance of 0x…", "approve the router to spend my tokens", "what
   can this contract do", "what did this transaction do", or resolving an ENS name.
-  Non-custodial: this never signs or sends — it hands the user a tx to sign.
+  Non-custodial: this never signs or sends; it hands the user a tx to sign.
 ---
 
-# abi.ninja — interacting with smart contracts
+# abi.ninja: interacting with smart contracts
 
 This skill turns "(chain, address) + intent" into a correct on-chain read or a
 **safe, simulated, ready-to-sign transaction**. The engine resolves an ABI even when
@@ -27,21 +27,21 @@ a transaction was sent. Never ask for a private key or seed phrase.
 
 Always follow this order. Do not skip step 2.
 
-1. **Resolve** — `resolve_abi(chain, address)`. Returns a capability manifest
-   (`interface.reads` / `interface.writes` — "the buttons"), `provenance`, a `proxy`
+1. **Resolve**: `resolve_abi(chain, address)`. Returns a capability manifest
+   (`interface.reads` / `interface.writes`, "the buttons"), `provenance`, a `proxy`
    chain if any, and `token` metadata. The manifest, not the raw ABI, is what you
    reason over and show the user.
 
-2. **Check provenance — ALWAYS.** Read `provenance.confidence`:
-   - `verified` — real names + NatSpec. Trust the function/param names.
-   - `partial` — verified-ish, but behind a proxy or partial match. Reasonable, but
+2. **Check provenance, ALWAYS.** Read `provenance.confidence`:
+   - `verified`: real names + NatSpec. Trust the function/param names.
+   - `partial`: verified-ish, but behind a proxy or partial match. Reasonable, but
      say so.
-   - `decompiled` — **heimdall guessed the names** (`names_synthetic: true`). The ABI
+   - `decompiled`: **heimdall guessed the names** (`names_synthetic: true`). The ABI
      is usable but a function called `transfer` might be named `Unresolved_0x…` or
      mislabeled. Treat with care: cross-check the selector against what you expect,
      and tell the user the names are inferred before any write.
-   - `selector-only` — only per-function selector matches; no full ABI.
-   Calibrate your confidence — and the user's — to this. This is the whole point.
+   - `selector-only`: only per-function selector matches; no full ABI.
+   Calibrate your confidence (and the user's) to this. This is the whole point.
 
 3. **Act:**
    - **Read** (view/pure): `read_contract(chain, address, fn, args)`. No wallet,
@@ -53,7 +53,7 @@ Always follow this order. Do not skip step 2.
 4. **Present & hand off** (writes): show the user the `human_summary`, the simulated
    effects (`simulation.asset_changes` / `state_diff` / `gas_used`), and **every**
    item in `warnings`. Then give them the `deeplink` to sign. If
-   `simulation.success` is false, the tx **will revert** — do not tell the user to
+   `simulation.success` is false, the tx **will revert**; do not tell the user to
    send it; explain why it reverts (`simulation.revert.reason`).
 
 Other verbs: `decode_tx(chain, hash)` ("what did this tx do?"),
@@ -92,7 +92,7 @@ const prep = await ninja.prepareTx("base", r.address, "transfer", ["0xTo…", "1
 - **Decompiled ⇒ hedge.** Lead with the warning, never present a synthetic name as
   ground truth.
 - **Surface warnings verbatim.** `prepare_tx.warnings` exists so the user sees risk.
-- **Pass `from`** for writes/simulations — it's the user's address (no key needed).
+- **Pass `from`** for writes/simulations: it's the user's address (no key needed).
 - **Local chains** (`local`/31337): pass `rpcUrl`.
 
 For the full verb signatures, chain table, error codes, and a worked end-to-end

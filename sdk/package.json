@@ -1,7 +1,7 @@
 {
   "name": "gulltoppr",
   "version": "0.2.0",
-  "description": "Typed client for gulltoppr — let agents interact with any contract on any EVM chain: resolve ABIs (even unverified), read, simulate, and prepare safe non-custodial transactions.",
+  "description": "Typed client for gulltoppr: let agents interact with any contract on any EVM chain. Resolve ABIs (even unverified), read, simulate, and prepare safe non-custodial transactions.",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

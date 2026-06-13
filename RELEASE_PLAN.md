@@ -1,26 +1,26 @@
-# gulltoppr — standalone release plan
+# gulltoppr: standalone release plan
 
 > **gulltoppr** lets any AI agent interact with **any contract on any EVM chain**.
 > Give it `(chain, address)` → it resolves the ABI (even for *unverified* contracts,
-> via heimdall decompilation — the moat), then reads, simulates, and prepares
+> via heimdall decompilation, the moat), then reads, simulates, and prepares
 > **safe, non-custodial** transactions. Agent-first: MCP is the headline, with a
 > REST API, a typed SDK (`npm i gulltoppr`), and a Claude Skill.
 >
 > Released **independently of abi.ninja** (no push access there; we move fast).
-> _Norse fit: gulltoppr is Heimdall's horse — the product rides heimdall
+> _Norse fit: gulltoppr is Heimdall's horse; the product rides heimdall
 > decompilation to reach any contract._
 
 ## Decisions (locked)
 - **Two repos**, not a monorepo:
-  - `portdeveloper/gulltoppr` — the product (engine + SDK + MCP + Skill). Renamed from `abi-ninja-engine`.
-  - `portdeveloper/heimdall-api` — the decompiler microservice. Renamed from the Rust `gulltoppr` (it wraps heimdall-rs; matches its Fly app name).
+  - `portdeveloper/gulltoppr`: the product (engine + SDK + MCP + Skill). Renamed from `abi-ninja-engine`.
+  - `portdeveloper/heimdall-api`: the decompiler microservice. Renamed from the Rust `gulltoppr` (it wraps heimdall-rs; matches its Fly app name).
 - **SDK** published unscoped as **`gulltoppr`** (`npm i gulltoppr`).
 
 ## What stays vs changes
-- **Architecture is unchanged** — the four faces + the resolution ladder
+- **Architecture is unchanged**: the four faces + the resolution ladder
   (Etherscan → Sourcify → proxy → heimdall(`heimdall-api`) → 4byte) all stay. This is
   a rebrand + decouple, not a rewrite.
-- **abi.ninja tie is cosmetic** — the engine never imported abi.ninja. The only link
+- **abi.ninja tie is cosmetic**: the engine never imported abi.ninja. The only link
   is `prepare_tx`'s optional signing deeplink. Make it **configurable** (`SIGNING_BASE_URL`,
   default still abi.ninja since it's a fine public signing UI we can link to without
   access). Lead with the universal `unsigned_tx` (any wallet signs it). PR #200 stays
@@ -35,7 +35,7 @@
 | npm SDK | `gulltoppr` | `gulltoppr` (deprecate old → points here) |
 | Fly: engine | `abi-ninja-engine` | `gulltoppr` (new app; recreate cache volume) |
 | Fly: MCP | `abi-ninja-mcp` | `gulltoppr-mcp` (new app; stateless) |
-| Fly: decompiler | `heimdall-api` | _(unchanged — already right)_ |
+| Fly: decompiler | `heimdall-api` | _(unchanged, already right)_ |
 | MCP server name | `abi-ninja` | `gulltoppr` |
 | Skill | `skill/abi-ninja/` | `skill/gulltoppr/` |
 | SDK default `baseUrl` | `gulltoppr.fly.dev` | `gulltoppr.fly.dev` |

@@ -1,4 +1,4 @@
-# abi.ninja — reference
+# abi.ninja: reference
 
 Full verb surface, chain table, error codes, and a worked example. Load this when
 you need exact signatures or are debugging a call. The workflow and safety rules are
@@ -9,7 +9,7 @@ in `SKILL.md`.
 | verb | inputs | returns |
 |------|--------|---------|
 | `resolve_abi` | `chain, address` | `{ interface{reads,writes}, abi, provenance, proxy?, token?, abi_for, cached }` |
-| `read_contract` | `chain, address, function, args` | `{ decoded[], raw, function_signature }` — view/pure only |
+| `read_contract` | `chain, address, function, args` | `{ decoded[], raw, function_signature }` · view/pure only |
 | `encode_call` | `chain, address, function, args, value?` | `{ data, function_signature }` |
 | `simulate` | `chain, from, {address,function,args} \| {to,data}, value?` | `Simulation` |
 | `prepare_tx` | `chain, address, function, args, from, value?` | `{ unsigned_tx, simulation, human_summary, deeplink, warnings }` |
@@ -40,7 +40,7 @@ RPC; `state_diff` is not yet populated. So absence of asset_changes ≠ "no tran
 ## Chains
 
 Alias or numeric id: `ethereum`/`mainnet` (1), `base` (8453), `optimism` (10),
-`arbitrum` (42161), `polygon` (137), `local` (31337 — **pass `rpcUrl`**). Any other
+`arbitrum` (42161), `polygon` (137), `local` (31337, **pass `rpcUrl`**). Any other
 id works if you pass `rpcUrl`. ENS resolves on mainnet.
 
 ## Error codes
@@ -49,9 +49,9 @@ id works if you pass `rpcUrl`. ENS resolves on mainnet.
 (`details.candidates`), `FUNCTION_NOT_FOUND`, `NOT_A_VIEW_FN` (called a write via
 `read_contract`), `ABI_NOT_FOUND` (EOA, or ladder exhausted), `DECOMPILE_FAILED`,
 `RPC_ERROR`, `UPSTREAM_TIMEOUT`, `RATE_LIMITED`. A *reverting simulation* is NOT an
-error — it returns `Simulation{ success:false, revert }`.
+error; it returns `Simulation{ success:false, revert }`.
 
-## Worked example — "approve 100 USDC for the Uniswap router on Base"
+## Worked example: "approve 100 USDC for the Uniswap router on Base"
 
 ```
 1. resolve_abi("base", "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913")
@@ -71,11 +71,11 @@ error — it returns `Simulation{ success:false, revert }`.
      warnings = []
 
 4. Show the user the summary + simulated gas + (empty) warnings, then hand over the
-   deeplink. They connect their wallet on abi.ninja and sign. You are done — you do
+   deeplink. They connect their wallet on abi.ninja and sign. You are done; you do
    NOT sign.
 ```
 
 If step 1 had returned `confidence: "decompiled"`, you would instead tell the user
 "this contract is unverified; the function I'm calling is named `approve` but that
-name was inferred by decompilation — please confirm before signing," and still hand
+name was inferred by decompilation; please confirm before signing," and still hand
 off the same way.

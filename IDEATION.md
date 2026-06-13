@@ -1,4 +1,4 @@
-# abi.ninja for agents — architecture ideation
+# abi.ninja for agents: architecture ideation
 
 > Goal: let AI agents interact with any smart contract on any EVM chain as easily
 > as a human uses abi.ninja today. The world went agentic; people ask their agents
@@ -6,7 +6,7 @@
 
 ## The core insight
 
-abi.ninja's real value isn't the UI — it's the **resolution layer**: give it a
+abi.ninja's real value isn't the UI; it's the **resolution layer**: give it a
 chain + address and it figures out the ABI and exposes a universal calling surface.
 Agents can call an LLM all day but can't reliably go from "the USDC contract on Base"
 to a correctly-encoded, simulated, safe transaction. That's the moat, repackaged.
@@ -21,17 +21,17 @@ die the moment a contract isn't on Etherscan. Ours won't.
   read, encode, simulate, and prepare an unsigned tx + human-readable summary; the
   user approves in their own wallet. Non-custodial, matches abi.ninja's ethos.
   (Design toward session keys / ERC-4337/7702 later, but not v1.)
-- **Surfaces:** all four — REST API (the engine), MCP server (headline agent product),
+- **Surfaces:** all four: REST API (the engine), MCP server (headline agent product),
   Claude Skill (workflow guide), npm SDK (typed client + refactor frontend onto it).
 - **Existing stack:** abi.ninja is frontend-only (Next.js / Scaffold-ETH 2, in
   `packages/nextjs`). Resolution is split: Etherscan v2 + proxy detection + ENS live
   client-side; **heimdall runs as a separate backend service ("gulltoppr")** the
   frontend calls.
 
-## Step 0 — extract a headless resolution engine
+## Step 0: extract a headless resolution engine
 
 Pull the resolver out of the React app into a standalone service (the REST API).
-One core capability with a **fallback ladder** — the ladder *is* the product:
+One core capability with a **fallback ladder**; the ladder *is* the product:
 
 ```
 resolve(chain, address):
@@ -60,16 +60,16 @@ decode_tx(chain, hash)                       → "what did this tx actually do" 
 resolve_name(ens/basename) ⇄ address
 ```
 
-`decode_tx` is a sleeper hit — heimdall already does calldata + trace decoding, so
+`decode_tx` is a sleeper hit; heimdall already does calldata + trace decoding, so
 "explain this transaction" comes almost for free, and agents love it.
 
 ## The four faces, ranked by leverage
 
-1. **REST API** — build first; the engine everything wraps. Stateless, cacheable.
-2. **MCP server** — thin adapter mapping verbs → MCP tools. Headline agent product.
-3. **npm SDK** — typed client over REST; also refactor abi.ninja's frontend onto it
+1. **REST API**: build first; the engine everything wraps. Stateless, cacheable.
+2. **MCP server**: thin adapter mapping verbs → MCP tools. Headline agent product.
+3. **npm SDK**: typed client over REST; also refactor abi.ninja's frontend onto it
    (kills the client/server resolution split for good).
-4. **Skill** — markdown teaching the workflow: resolve → check provenance → read or
+4. **Skill**: markdown teaching the workflow: resolve → check provenance → read or
    prepare → simulate → hand off. Encodes chain-ID table + "decompiled = be careful."
 
 ## Hand-off write flow
@@ -84,7 +84,7 @@ user:  approves in their own wallet (WalletConnect / deeplink / abi.ninja UI)
   deeplink (shareable URLs + unfurling already exist) pre-filled with contract/fn/args.
   Agent hands the user a link; user connects wallet and sends. Zero new wallet infra,
   drives traffic back to the app.
-- **Always pair unsigned tx with its simulation** — never return blind calldata.
+- **Always pair unsigned tx with its simulation**; never return blind calldata.
 
 ## Differentiators to bake in early
 
@@ -108,14 +108,14 @@ user:  approves in their own wallet (WalletConnect / deeplink / abi.ninja UI)
 
 ## Component map
 
-- **abi.ninja** — https://github.com/BuidlGuidl/abi.ninja (frontend, Next.js/SE-2)
-- **heimdall-rs** — https://github.com/Jon-Becker/heimdall-rs (Rust decompiler toolkit)
-- **gulltoppr** — https://github.com/portdeveloper/gulltoppr (heimdall backend service;
+- **abi.ninja** · https://github.com/BuidlGuidl/abi.ninja (frontend, Next.js/SE-2)
+- **heimdall-rs** · https://github.com/Jon-Becker/heimdall-rs (Rust decompiler toolkit)
+- **gulltoppr** · https://github.com/portdeveloper/gulltoppr (heimdall backend service;
   Gulltoppr = Heimdall's horse in Norse myth)
 
 ## Progress tracking
 
 - **gulltoppr** has its own running progress log: `PROGRESS.md` in the gulltoppr repo
   (https://github.com/portdeveloper/gulltoppr/blob/master/PROGRESS.md). That's where
-  round-by-round improvements to the heimdall backend are tracked — check it before
+  round-by-round improvements to the heimdall backend are tracked; check it before
   picking up gulltoppr work so we don't repeat or undo something.

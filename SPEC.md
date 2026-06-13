@@ -1,11 +1,11 @@
-# abi.ninja for agents — verb / REST / MCP contract
+# abi.ninja for agents: verb / REST / MCP contract
 
 > The single source of truth for the agent-facing surface. All four faces (REST
 > API, MCP server, npm SDK, Skill) implement **the same verbs over the same data
 > types**; this doc defines them once so the faces can't drift. Strategy and
 > rationale live in `IDEATION.md`; this is the contract.
 
-Status: **draft v0.1** (2026-06-08). Greenfield — abi.ninja has no public REST
+Status: **draft v0.1** (2026-06-08). Greenfield; abi.ninja has no public REST
 surface today (resolution lives client-side in the Next.js app), so nothing here
 must stay backwards-compatible except gulltoppr's existing endpoints.
 
@@ -15,10 +15,10 @@ must stay backwards-compatible except gulltoppr's existing endpoints.
 
 These were open in the checkpoint; resolved here so the spec is buildable.
 
-1. **The REST API is a new, standalone service** — the "engine" of IDEATION.md.
+1. **The REST API is a new, standalone service:** the "engine" of IDEATION.md.
    It owns the resolution ladder and the verb surface. The abi.ninja frontend and
    every other face are clients of it.
-2. **It calls gulltoppr over HTTP for the heimdall rung — it does not embed
+2. **It calls gulltoppr over HTTP for the heimdall rung; it does not embed
    heimdall.** gulltoppr is already deployed (`https://heimdall-api.fly.dev`) and
    the subprocess-isolation decision (panics/OOM/timeouts contained out-of-process)
    is exactly why we don't want heimdall in the API's address space. The API treats
@@ -35,27 +35,27 @@ These were open in the checkpoint; resolved here so the spec is buildable.
 ## 0.5 What we return to the agent (the product shape)
 
 **We return an interaction surface, not an ABI.** abi.ninja's value was never the
-JSON ABI — it's the live calling surface (read a value, fill args, send a tx). The
+JSON ABI; it's the live calling surface (read a value, fill args, send a tx). The
 raw ABI is what *makes* that surface; it isn't the deliverable. An agent can already
 fetch an ABI from Etherscan; what it can't do reliably is go ABI → correctly
 encoded → simulated → safe tx. That gap is the product.
 
 So the agent gets two things, which map 1:1 onto abi.ninja's UI:
 
-1. **A capability manifest** (`resolve_abi` → `interface`, §2.4) — the "buttons
+1. **A capability manifest** (`resolve_abi` → `interface`, §2.4): the "buttons
    abi.ninja would render," as JSON: read functions vs write functions, each with
    named inputs, types, mutability, per-function provenance, and human hints. This
    is what the agent reasons over to *plan*, and what it shows the user ("here's
    what I can do with this contract"). It's where heimdall's synthetic names /
    unreliable mutability get normalized and honestly tagged.
-2. **Execution verbs** (§3) — the agent works in `(function, args)` terms and never
+2. **Execution verbs** (§3): the agent works in `(function, args)` terms and never
    touches calldata or the ABI. `read_contract` returns the decoded answer;
    `prepare_tx` returns a simulated, ready-to-sign hand-off.
 
 One-liner: *"Tell me what you want to do with this contract in plain `(function,
 args)` terms; I'll get you the answer (reads) or a safe, simulated, ready-to-sign
 transaction (writes)."* The raw ABI is still included in `resolve_abi` output for
-agents running their own viem/ethers — but it's a secondary field, not the headline.
+agents running their own viem/ethers; but it's a secondary field, not the headline.
 
 ---
 
@@ -67,7 +67,7 @@ These hold for every verb, every face. Violating one is a bug, not a tradeoff.
   (Section 2.2). An agent must be able to tell "verified, NatSpec present" from
   "decompiled, names may be synthetic" without inference.
 - **Never return blind calldata for a write.** `prepare_tx` always pairs the
-  unsigned tx with a simulation. If simulation fails, the verb fails — it does not
+  unsigned tx with a simulation. If simulation fails, the verb fails; it does not
   return an unsimulated tx.
 - **Reads need no signer.** `read_contract` / `resolve_abi` / `decode_tx` /
   `resolve_name` require no `from` and no key.
@@ -84,10 +84,10 @@ These hold for every verb, every face. Violating one is a bug, not a tradeoff.
 JSON Schema-ish; `?` = optional. These are shared by REST bodies and MCP tool I/O.
 
 ### 2.1 `Address` / `ChainId`
-- `Address` — `0x`-prefixed, EIP-55 checksummed on output, accepted any-case on input.
-- `ChainId` — integer (e.g. `1`, `8453`, `31337`) or a Section 6 alias string.
+- `Address`: `0x`-prefixed, EIP-55 checksummed on output, accepted any-case on input.
+- `ChainId`: integer (e.g. `1`, `8453`, `31337`) or a Section 6 alias string.
 
-### 2.2 `Provenance` — first-class, on every ABI result
+### 2.2 `Provenance`: first-class, on every ABI result
 ```jsonc
 {
   "source": "etherscan" | "sourcify" | "proxy-impl" | "bytecode-match" | "heimdall-decompiled" | "4byte",
@@ -113,15 +113,15 @@ no full ABI).
 }
 ```
 
-### 2.4 `AbiResult` — output of `resolve_abi`
-The **headline is `interface`** (the capability manifest, §0.5) — the digested,
+### 2.4 `AbiResult`: output of `resolve_abi`
+The **headline is `interface`** (the capability manifest, §0.5): the digested,
 agent-legible "what can I do" view. `abi` (raw JSON ABI) is included but secondary.
 ```jsonc
 {
   "chain": 1,
   "address": "0x…",                       // the queried address
-  "interface": { /* 2.4a — the capability manifest, the product */ },
-  "abi": [ /* standard JSON ABI — secondary, for agents running their own viem/ethers */ ],
+  "interface": { /* 2.4a: the capability manifest, the product */ },
+  "abi": [ /* standard JSON ABI: secondary, for agents running their own viem/ethers */ ],
   "provenance": { /* 2.2 */ },
   "proxy": { /* 2.3, present only if is_proxy */ },
   "token": { "kind": "erc20"|"erc721"|"erc1155"|null, "symbol": "?", "decimals": 18, "name": "?" }?,
@@ -130,13 +130,13 @@ agent-legible "what can I do" view. `abi` (raw JSON ABI) is included but seconda
 }
 ```
 
-### 2.4a `Interface` — the capability manifest ("the buttons")
+### 2.4a `Interface`: the capability manifest ("the buttons")
 A normalized, provenance-tagged view of the callable surface, split by what an
 agent actually needs to decide: can I just read this, or does it cost a tx? Derived
 from `abi`, but it's where decompiled-ABI mutability/names get normalized and hinted.
 ```jsonc
 {
-  "reads": [        // view / pure — call freely, no wallet, no cost
+  "reads": [        // view / pure: call freely, no wallet, no cost
     {
       "function": "balanceOf",
       "signature": "balanceOf(address)",
@@ -146,7 +146,7 @@ from `abi`, but it's where decompiled-ABI mutability/names get normalized and hi
       "hint": "returns base units; this token has 6 decimals"?
     }
   ],
-  "writes": [       // nonpayable / payable — needs prepare_tx → user signs
+  "writes": [       // nonpayable / payable: needs prepare_tx → user signs
     {
       "function": "transfer",
       "signature": "transfer(address,uint256)",
@@ -159,12 +159,12 @@ from `abi`, but it's where decompiled-ABI mutability/names get normalized and hi
 }
 ```
 - `reads` = `view`/`pure`; `writes` = everything that mutates (payable flagged).
-- When provenance is `decompiled`, mutability is heimdall's best guess —
+- When provenance is `decompiled`, mutability is heimdall's best guess;
   `names_synthetic: true` and a `hint` say so per-function, so the agent calibrates.
 - `hint` is generated from token metadata (decimals), NatSpec (when verified), and
-  selector heuristics — the human-readable nudge abi.ninja's UI gives implicitly.
+  selector heuristics: the human-readable nudge abi.ninja's UI gives implicitly.
 
-### 2.5 `Call` — the shared call descriptor (input to read/encode/simulate/prepare)
+### 2.5 `Call`: the shared call descriptor (input to read/encode/simulate/prepare)
 ```jsonc
 {
   "chain": 1,
@@ -179,11 +179,11 @@ from `abi`, but it's where decompiled-ABI mutability/names get normalized and hi
 overload ambiguity the call fails with `AMBIGUOUS_FUNCTION` listing candidates.
 
 ### 2.6 `Simulation`
-Backed by raw `eth_call` / `debug_traceCall` against the chain RPC — **no external
+Backed by raw `eth_call` / `debug_traceCall` against the chain RPC: **no external
 simulation provider** (no Tenderly). So `asset_changes` and `state_diff` are
 **best-effort**: decoded from the trace's touched slots and emitted logs (e.g.
 `Transfer` events → asset deltas). Cheaper, keyless, works on any chain incl. local
-31337 — at the cost of thinner diffs for contracts that move value without standard
+31337, at the cost of thinner diffs for contracts that move value without standard
 events. `success`/`gas_used`/`revert`/`return_value` are always exact.
 ```jsonc
 {
@@ -206,14 +206,14 @@ events. `success`/`gas_used`/`revert`/`return_value` are always exact.
 { "chainId": 1, "to": "0x…", "from": "0x…", "data": "0x…", "value": "0", "gas": "60000"? }
 ```
 
-### 2.8 `PreparedTx` — output of `prepare_tx`, the hand-off payload
+### 2.8 `PreparedTx`: output of `prepare_tx`, the hand-off payload
 ```jsonc
 {
   "unsigned_tx": { /* 2.7 */ },
   "simulation": { /* 2.6 */ },
   "human_summary": "Approve 1,000 USDC (6 decimals) for spending by 0xUniswap…",
   "deeplink": "https://abi.ninja/{chain}/{address}?function=…&args=…",   // signing surface
-  "warnings": [ "ABI decompiled — function name is inferred; confirm this is `approve`." ]
+  "warnings": [ "ABI decompiled: function name is inferred; confirm this is `approve`." ]
 }
 ```
 `warnings` is populated from provenance: a decompiled ABI, an unverified
@@ -250,13 +250,13 @@ alias). JSON in/out, UTF-8.
 
 | Verb | Method + path | Body / query |
 |------|---------------|--------------|
-| `resolve_abi` | `GET /v1/{chain}/{address}/abi` | — |
+| `resolve_abi` | `GET /v1/{chain}/{address}/abi` | · |
 | `read_contract` | `POST /v1/{chain}/{address}/read` | `{ function, args }` |
 | `encode_call` | `POST /v1/{chain}/{address}/encode` | `{ function, args, value? }` |
 | `simulate` | `POST /v1/{chain}/simulate` | `{ from, to, data, value? }` or `{ from, address, function, args, value? }` |
 | `prepare_tx` | `POST /v1/{chain}/{address}/prepare` | `{ function, args, from, value? }` |
-| `decode_tx` | `GET /v1/{chain}/tx/{hash}` | — |
-| `resolve_name` | `GET /v1/{chain}/name/{name}` and `GET /v1/{chain}/name/by-address/{address}` | — |
+| `decode_tx` | `GET /v1/{chain}/tx/{hash}` | · |
+| `resolve_name` | `GET /v1/{chain}/name/{name}` and `GET /v1/{chain}/name/by-address/{address}` | · |
 
 Conventions:
 - **Provenance also surfaces as headers** on `…/abi` (mirrors gulltoppr's
@@ -274,7 +274,7 @@ Conventions:
 Thin adapter: one MCP tool per verb, names below. Each tool's `inputSchema` is the
 verb's input type (Section 3 / 2.5); output is the verb's output type as the tool
 result. Tools are **read-only-annotated** except `prepare_tx` (which still signs
-nothing — annotate as non-destructive, returns a hand-off).
+nothing; annotate as non-destructive, returns a hand-off).
 
 | MCP tool | Wraps | One-line description (shown to the model) |
 |----------|-------|--------------------------------------------|
@@ -297,7 +297,7 @@ MCP-specific guidance baked into the server's tool descriptions:
 ## 6. Chains
 
 `chain` accepts an EIP-155 id or an alias. The API ships a built-in table; minimum
-v1 set (extend freely — abi.ninja already supports a long list):
+v1 set (extend freely; abi.ninja already supports a long list):
 
 | alias | id | default RPC source |
 |-------|----|--------------------|
@@ -306,7 +306,7 @@ v1 set (extend freely — abi.ninja already supports a long list):
 | `optimism` | 10 | publicnode |
 | `arbitrum` | 42161 | publicnode |
 | `polygon` | 137 | publicnode |
-| `local` | 31337 | **none — caller must pass `rpc_url`** |
+| `local` | 31337 | **none · caller must pass `rpc_url`** |
 
 Unknown chain id with no `rpc_url` → `UNKNOWN_CHAIN`. ENS resolution is mainnet;
 basenames resolve on Base.
@@ -329,14 +329,14 @@ with the same `code` in the payload. Shape:
 | `AMBIGUOUS_FUNCTION` | 400 | overloaded name; `details.candidates` lists signatures |
 | `FUNCTION_NOT_FOUND` | 404 | no such function in the resolved ABI |
 | `NOT_A_VIEW_FN` | 400 | `read_contract` called on a state-mutating fn |
-| `ABI_NOT_FOUND` | 422 | ladder exhausted — no ABI from any rung (incl. no bytecode) |
+| `ABI_NOT_FOUND` | 422 | ladder exhausted · no ABI from any rung (incl. no bytecode) |
 | `DECOMPILE_FAILED` | 502 | gulltoppr/heimdall failed on the bytecode |
-| `SIMULATION_REVERTED` | 200 | *not an error* — returned as `Simulation{success:false}` with decoded revert |
+| `SIMULATION_REVERTED` | 200 | *not an error* · returned as `Simulation{success:false}` with decoded revert |
 | `RPC_ERROR` | 502 | upstream RPC failed/unreachable |
 | `UPSTREAM_TIMEOUT` | 504 | a rung (esp. decompile) exceeded its deadline |
 | `RATE_LIMITED` | 429 | API or upstream throttle |
 
-Note: a *reverted simulation* is a successful API response, not an error — the
+Note: a *reverted simulation* is a successful API response, not an error; the
 agent needs the decoded revert reason to reason about it.
 
 ---
@@ -367,7 +367,7 @@ contract is verified (so events/params get real names).
 
 gulltoppr operational notes that constrain this layer (see `gulltoppr-service`
 memory + its `CLAUDE.md`): no concurrency cap yet (burst of distinct large
-contracts can OOM the 2 GB Fly VM — coalescing only dedupes *identical* requests);
+contracts can OOM the 2 GB Fly VM; coalescing only dedupes *identical* requests);
 trust the pinned `HEIMDALL_VERSION` in `/health`, not `heimdall --version`.
 
 ---
@@ -381,7 +381,7 @@ agent → presents human_summary + simulation.asset_changes/state_diff + warning
 user  → opens deeplink → abi.ninja prefilled with contract/fn/args
 user  → connects wallet, reviews, signs, broadcasts
 ```
-abi.ninja is the signing surface — shareable prefilled URLs + unfurling already
+abi.ninja is the signing surface: shareable prefilled URLs + unfurling already
 exist there, so `prepare_tx` just constructs that URL. Zero new wallet infra; drives
 traffic back to the app. Session keys / ERC-4337 / 7702 are explicitly **out of v1**.
 
@@ -400,16 +400,16 @@ traffic back to the app. Session keys / ERC-4337 / 7702 are explicitly **out of 
 
 ## 11. Open items (carry into build)
 
-- **Simulation backend: DECIDED — raw `eth_call`/`debug_traceCall`, no Tenderly**
+- **Simulation backend: DECIDED, raw `eth_call`/`debug_traceCall`, no Tenderly**
   (keyless, any-chain incl. 31337). Consequence to build for: `asset_changes` /
   `state_diff` are best-effort from trace + logs (§2.6). Open sub-item: which RPCs
-  expose `debug_traceCall` (many public ones don't) — may need `eth_call` +
+  expose `debug_traceCall` (many public ones don't); may need `eth_call` +
   log-decoding fallback when tracing is unavailable.
 - **Etherscan v2 key management** (one multichain key) + per-chain RPC defaults +
   rate-limit budgeting across rungs.
 - **gulltoppr concurrency cap** (the one open backend item): the ladder's rung 4 is
   the OOM risk; a ~20-line Semaphore in gulltoppr is the fix if real load justifies.
-- **`abi_for` vs diamond:** diamonds have no single impl address — `proxy.hops` holds
+- **`abi_for` vs diamond:** diamonds have no single impl address; `proxy.hops` holds
   facets; `abi_for` may be the proxy itself with a merged facet ABI. Specify when we
   build proxy rung.
 - **Build order (from IDEATION.md):** REST engine (ladder + provenance) → MCP server
