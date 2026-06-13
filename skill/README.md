@@ -1,11 +1,11 @@
 # abi.ninja Skill
 
 The fourth face (after the REST engine, MCP server, and SDK): a **Claude Skill** that
-teaches an agent the contract-interaction workflow — resolve → check provenance →
-read or prepare → simulate → hand off — and the non-custodial safety rules.
+teaches an agent the contract-interaction workflow (resolve → check provenance →
+read or prepare → simulate → hand off) and the non-custodial safety rules.
 
 It's a workflow guide, not code: it makes any Claude that has the `gulltoppr` MCP
-tools (or the `gulltoppr`) use them *correctly and safely* — especially the
+tools (or the `gulltoppr`) use them *correctly and safely*, especially the
 provenance calibration ("decompiled ⇒ names are inferred") and the never-sign
 hand-off model.
 

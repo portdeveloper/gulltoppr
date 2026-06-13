@@ -1,6 +1,6 @@
 # 🐴 gulltoppr
 
-Typed TypeScript client for the [gulltoppr](../README.md) — resolve any
+Typed TypeScript client for the [gulltoppr](../README.md): resolve any
 contract's ABI (verified *or* unverified, via the heimdall decompile rung) and
 prepare safe, simulated, non-custodial interactions. The typed client over the REST
 surface in [`../SPEC.md`](../SPEC.md) §4.
@@ -17,17 +17,17 @@ import { AbiNinja } from "gulltoppr";
 // baseUrl defaults to the live engine; pass it only to override.
 const ninja = new AbiNinja({ baseUrl: "https://api.gulltoppr.dev" });
 
-// Resolve — ABI is secondary; the capability manifest + provenance are the point.
+// Resolve: ABI is secondary; the capability manifest + provenance are the point.
 const r = await ninja.resolveAbi("base", "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913");
 if (r.provenance.confidence === "decompiled") {
-  console.warn("Decompiled ABI — names are inferred:", r.provenance.notes);
+  console.warn("Decompiled ABI; names are inferred:", r.provenance.notes);
 }
 console.log(r.interface.reads.map((f) => f.signature));   // the "buttons"
 
 // Read (no wallet)
 const { decoded } = await ninja.read("base", r.address, "balanceOf", ["0xabc…"]);
 
-// Prepare a write — returns an UNSIGNED tx + simulation + deeplink. Signs nothing.
+// Prepare a write: returns an UNSIGNED tx + simulation + deeplink. Signs nothing.
 const prep = await ninja.prepareTx("base", r.address, "transfer", ["0xdef…", "1000000"], {
   from: "0xMyWallet…",
 });
@@ -35,7 +35,7 @@ console.log(prep.human_summary, prep.warnings);
 // → hand prep.deeplink to the user; they sign in their own wallet.
 ```
 
-### `contract()` — resolve once, then act (viem-flavoured)
+### `contract()`: resolve once, then act (viem-flavoured)
 
 ```ts
 const usdc = ninja.contract("base", "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913");
@@ -68,5 +68,5 @@ const tx = await usdc.prepare("approve", ["0xspender…", "1000000"], { from: "0
 ```bash
 npm run build       # tsc → dist/ (js + d.ts)
 npm run typecheck
-npm test            # vitest — client tests with an injected fetch (no network)
+npm test            # vitest client tests with an injected fetch (no network)
 ```
