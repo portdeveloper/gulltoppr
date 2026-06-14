@@ -3,15 +3,8 @@
  * RPC, and a viem Chain object. Unknown ids are allowed *if* the caller supplies an
  * rpc_url (so local/31337 and arbitrary chains work); otherwise UNKNOWN_CHAIN.
  */
-import {
-  arbitrum,
-  base,
-  mainnet,
-  optimism,
-  polygon,
-  type Chain,
-} from "viem/chains";
-import { defineChain } from "viem";
+import * as viemChains from "viem/chains";
+import { defineChain, type Chain } from "viem";
 import { ApiError } from "./errors.js";
 
 interface ChainEntry {
@@ -19,48 +12,123 @@ interface ChainEntry {
   chain: Chain;
   /** Default RPC; undefined means the caller MUST pass rpc_url (e.g. local). */
   defaultRpc?: string;
+  aliases: string[];
 }
 
-const monad = defineChain({
-  id: 143,
-  name: "Monad",
-  nativeCurrency: { name: "Monad", symbol: "MON", decimals: 18 },
-  rpcUrls: { default: { http: ["https://rpc.monad.xyz"] } },
-  blockExplorers: { default: { name: "MonadVision", url: "https://monadvision.com" } },
+const local = defineChain({
+  id: 31337,
+  name: "Local",
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  rpcUrls: { default: { http: ["http://127.0.0.1:8545"] } },
 });
 
-const monadTestnet = defineChain({
-  id: 10143,
-  name: "Monad Testnet",
-  nativeCurrency: { name: "Monad", symbol: "MON", decimals: 18 },
-  rpcUrls: { default: { http: ["https://testnet-rpc.monad.xyz"] } },
-  blockExplorers: { default: { name: "MonadVision Testnet", url: "https://testnet.monadvision.com" } },
-});
-
-// publicnode hostnames are reliable from this environment (eth.llamarpc is not).
-const ENTRIES: Record<string, ChainEntry> = {
-  ethereum: { id: 1, chain: mainnet, defaultRpc: "https://ethereum-rpc.publicnode.com" },
-  mainnet: { id: 1, chain: mainnet, defaultRpc: "https://ethereum-rpc.publicnode.com" },
-  base: { id: 8453, chain: base, defaultRpc: "https://base-rpc.publicnode.com" },
-  optimism: { id: 10, chain: optimism, defaultRpc: "https://optimism-rpc.publicnode.com" },
-  arbitrum: { id: 42161, chain: arbitrum, defaultRpc: "https://arbitrum-one-rpc.publicnode.com" },
-  polygon: { id: 137, chain: polygon, defaultRpc: "https://polygon-bor-rpc.publicnode.com" },
-  monad: { id: 143, chain: monad, defaultRpc: "https://rpc.monad.xyz" },
-  "monad-mainnet": { id: 143, chain: monad, defaultRpc: "https://rpc.monad.xyz" },
-  "monad-testnet": { id: 10143, chain: monadTestnet, defaultRpc: "https://testnet-rpc.monad.xyz" },
-  monadtestnet: { id: 10143, chain: monadTestnet, defaultRpc: "https://testnet-rpc.monad.xyz" },
-  local: { id: 31337, chain: defineChain({ id: 31337, name: "Local", nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 }, rpcUrls: { default: { http: ["http://127.0.0.1:8545"] } } }) },
+const PREFERRED_RPC_BY_ID: Record<number, string | undefined> = {
+  // publicnode hostnames are reliable from this environment (eth.llamarpc is not).
+  1: "https://ethereum-rpc.publicnode.com",
+  8453: "https://base-rpc.publicnode.com",
+  10: "https://optimism-rpc.publicnode.com",
+  42161: "https://arbitrum-one-rpc.publicnode.com",
+  137: "https://polygon-bor-rpc.publicnode.com",
+  143: "https://rpc.monad.xyz",
+  10143: "https://testnet-rpc.monad.xyz",
+  31337: undefined,
 };
 
-const BY_ID: Record<number, ChainEntry> = Object.fromEntries(
-  Object.values(ENTRIES).map((e) => [e.id, e]),
-);
+const EXTRA_ALIASES_BY_ID: Record<number, string[]> = {
+  1: ["ethereum"],
+  42161: ["arbitrum"],
+  143: ["monad-mainnet"],
+  10143: ["monad-testnet"],
+};
+
+function isChain(value: unknown): value is Chain {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      typeof (value as Chain).id === "number" &&
+      typeof (value as Chain).name === "string" &&
+      (value as Chain).nativeCurrency &&
+      (value as Chain).rpcUrls,
+  );
+}
+
+function kebab(input: string): string {
+  return input
+    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .toLowerCase();
+}
+
+function aliasesFor(exportName: string, chain: Chain): string[] {
+  return [
+    exportName.toLowerCase(),
+    kebab(exportName),
+    kebab(chain.name),
+    ...(EXTRA_ALIASES_BY_ID[chain.id] ?? []),
+  ].filter((alias, index, all) => alias && all.indexOf(alias) === index);
+}
+
+function rpcFor(chain: Chain): string | undefined {
+  if (Object.prototype.hasOwnProperty.call(PREFERRED_RPC_BY_ID, chain.id)) return PREFERRED_RPC_BY_ID[chain.id];
+  return chain.rpcUrls.default.http[0];
+}
+
+const ENTRIES: Record<string, ChainEntry> = {};
+const BY_ID = new Map<number, ChainEntry>();
+
+function addEntry(exportName: string, chain: Chain) {
+  const aliases = aliasesFor(exportName, chain);
+  const entry: ChainEntry = {
+    id: chain.id,
+    chain,
+    defaultRpc: rpcFor(chain),
+    aliases,
+  };
+
+  if (!BY_ID.has(chain.id)) BY_ID.set(chain.id, entry);
+  for (const alias of aliases) {
+    ENTRIES[alias] ??= entry;
+  }
+}
+
+for (const [exportName, chain] of Object.entries(viemChains)) {
+  if (isChain(chain)) addEntry(exportName, chain);
+}
+
+addEntry("local", local);
 
 export interface ResolvedChain {
   id: number;
   chain: Chain;
   /** The RPC to use: override > default. Throws UNKNOWN_CHAIN if neither exists. */
   rpcUrl: string;
+}
+
+export interface ChainInfo {
+  id: number;
+  name: string;
+  aliases: string[];
+  default_rpc_url?: string;
+  native_currency: {
+    name: string;
+    symbol: string;
+    decimals: number;
+  };
+  block_explorer_url?: string;
+}
+
+export function listChains(): ChainInfo[] {
+  return [...BY_ID.values()]
+    .sort((a, b) => a.chain.name.localeCompare(b.chain.name) || a.id - b.id)
+    .map((entry) => ({
+      id: entry.id,
+      name: entry.chain.name,
+      aliases: entry.aliases,
+      ...(entry.defaultRpc ? { default_rpc_url: entry.defaultRpc } : {}),
+      native_currency: entry.chain.nativeCurrency,
+      ...(entry.chain.blockExplorers?.default?.url ? { block_explorer_url: entry.chain.blockExplorers.default.url } : {}),
+    }));
 }
 
 /**
@@ -71,7 +139,7 @@ export function resolveChain(input: number | string, rpcOverride?: string): Reso
   let entry: ChainEntry | undefined;
 
   if (typeof input === "number" || /^\d+$/.test(String(input))) {
-    entry = BY_ID[Number(input)];
+    entry = BY_ID.get(Number(input));
   } else {
     entry = ENTRIES[String(input).toLowerCase()];
   }

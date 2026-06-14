@@ -8,6 +8,7 @@ import type { Address, Hex } from "viem";
 import { AbiNinjaError, type ErrorCode } from "./errors.js";
 import type {
   AbiResult,
+  ChainInfo,
   ChainInput,
   DecodeTxResult,
   EncodeResult,
@@ -61,6 +62,12 @@ export class AbiNinja {
   }
 
   // ── verbs ───────────────────────────────────────────────────────────────────
+
+  /** Supported chain catalog, backed by viem/chains plus gulltoppr RPC overrides. */
+  async chains(): Promise<ChainInfo[]> {
+    const body = await this.get<{ chains: ChainInfo[] }>("/v1/chains");
+    return body.chains;
+  }
 
   /** resolve_abi: ABI + capability manifest + provenance + proxy chain. */
   resolveAbi(chain: ChainInput, address: Address, opts?: CallOpts): Promise<AbiResult> {

@@ -10,6 +10,19 @@ import type { Abi, Address, Hex } from "viem";
 
 export type ChainInput = number | string;
 
+export interface ChainInfo {
+  id: number;
+  name: string;
+  aliases: string[];
+  default_rpc_url?: string;
+  native_currency: {
+    name: string;
+    symbol: string;
+    decimals: number;
+  };
+  block_explorer_url?: string;
+}
+
 // §2.2
 export type ProvenanceSource = "etherscan" | "sourcify" | "proxy-impl" | "bytecode-match" | "heimdall-decompiled" | "4byte";
 export type Confidence = "verified" | "partial" | "decompiled" | "selector-only";

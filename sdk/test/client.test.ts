@@ -20,6 +20,14 @@ function fakeFetch(handler: (url: string) => { status?: number; body?: unknown }
 }
 
 describe("AbiNinja client", () => {
+  it("chains GETs the chain catalog", async () => {
+    const { fn, calls } = fakeFetch(() => ({ body: { chains: [{ id: 143, name: "Monad", aliases: ["monad"] }] } }));
+    const chains = await new AbiNinja({ baseUrl: BASE, fetch: fn }).chains();
+    expect(calls[0].method).toBe("GET");
+    expect(calls[0].url).toBe(`${BASE}/v1/chains`);
+    expect(chains[0]).toMatchObject({ id: 143, name: "Monad" });
+  });
+
   it("resolveAbi GETs the abi route and parses the body", async () => {
     const { fn, calls } = fakeFetch(() => ({ body: { address: ADDR, abi: [], provenance: { source: "etherscan" } } }));
     const r = await new AbiNinja({ baseUrl: BASE, fetch: fn }).resolveAbi("ethereum", ADDR);

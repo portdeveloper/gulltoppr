@@ -45,12 +45,12 @@ function guard<A>(fn: (args: A) => Promise<CallToolResult>) {
 }
 
 // ── shared zod fields ────────────────────────────────────────────────────────
-const chain = z.string().describe('Chain alias ("ethereum", "base", "optimism", "arbitrum", "polygon", "local") or numeric chain id.');
+const chain = z.string().describe('Chain alias from GET /v1/chains (for example "ethereum", "base", "monad", "bsc") or numeric chain id.');
 const address = z.string().describe("0x contract address.");
 const fn = z.string().describe('Function name, or full signature like "transfer(address,uint256)" if overloaded.');
 const args = z.array(z.any()).default([]).describe("Function arguments, in order. Pass uint values as decimal strings.");
 const value = z.string().optional().describe("Native value in wei (decimal string), for payable functions.");
-const rpc_url = z.string().optional().describe("Override RPC URL. Required for chains with no default (e.g. local/31337).");
+const rpc_url = z.string().optional().describe("Override RPC URL. Required for chains with no default (e.g. local/31337) or custom EVM chain ids.");
 const from = z.string().describe("The sender address (the user's wallet). No key is needed — nothing is signed.");
 
 const READ = { readOnlyHint: true, openWorldHint: true } as const;

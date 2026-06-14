@@ -74,6 +74,19 @@ describe("HTTP layer", () => {
     expect(body).toHaveProperty("bytecodes");
   });
 
+  it("GET /v1/chains → viem-backed chain catalog", async () => {
+    const res = await app.request("/v1/chains");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.chains.length).toBeGreaterThan(100);
+    expect(body.chains).toContainEqual(expect.objectContaining({
+      id: 143,
+      name: "Monad",
+      aliases: expect.arrayContaining(["monad", "monad-mainnet"]),
+      default_rpc_url: "https://rpc.monad.xyz",
+    }));
+  });
+
   it("sets rate-limit headers on API routes", async () => {
     const res = await app.request("/v1/ethereum/notanaddress/abi");
     expect(res.headers.get("ratelimit-limit")).toBe("120");

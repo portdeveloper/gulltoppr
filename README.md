@@ -51,6 +51,7 @@ npm run test:live      # opt-in live contract smoke tests (RPC/decompiler/networ
 | `prepare_tx` | `POST /v1/{chain}/{address}/prepare` · body `{function, args, from, value?}` |
 | `decode_tx` | `GET /v1/{chain}/tx/{hash}` |
 | `resolve_name` | `GET /v1/{chain}/name/{name}` · `GET /v1/{chain}/name/by-address/{address}` |
+| chain catalog | `GET /v1/chains` · viem-backed aliases/default RPCs for UI clients |
 | registry lookup | `GET /v1/lookup/{selector}` · 4-byte (function/error) or 32-byte (event topic0), chain-independent |
 | registry stats | `GET /v1/registry/stats` |
 
@@ -78,10 +79,10 @@ The accumulated data is published as a **CC0 dataset**:
 [`evm-abi-commons`](https://github.com/portdeveloper/evm-abi-commons)
 (regenerate any time from `GET /v1/registry/export`).
 
-`{chain}` is an alias (`ethereum`, `base`, `optimism`, `arbitrum`, `polygon`,
-`monad`, `monad-testnet`, `local`) or a numeric id. Pass `?rpc_url=` to override
-the RPC (required for chains with no default, e.g. `local`/31337; this is how any
-EVM chain works before it has a built-in alias).
+`{chain}` is any alias from `GET /v1/chains` (backed by `viem/chains`) or a
+numeric id. Pass `?rpc_url=` to override the RPC (required for chains with no
+default, e.g. `local`/31337; this is how any EVM chain works before it has a
+built-in alias).
 
 ```bash
 curl localhost:8787/v1/ethereum/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/abi

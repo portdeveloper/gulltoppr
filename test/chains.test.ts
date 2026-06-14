@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { resolveChain } from "../src/chains.js";
+import { listChains, resolveChain } from "../src/chains.js";
 import { ApiError } from "../src/errors.js";
 
 describe("resolveChain", () => {
@@ -16,13 +16,22 @@ describe("resolveChain", () => {
     expect(resolveChain("monadtestnet").id).toBe(10143);
   });
 
+  it("resolves viem chain aliases beyond the hand-maintained set", () => {
+    expect(resolveChain("bsc").id).toBe(56);
+    expect(resolveChain("bnb-smart-chain").id).toBe(56);
+    expect(resolveChain("sepolia").id).toBe(11155111);
+    expect(resolveChain("viction").id).toBe(88);
+  });
+
   it("resolves numeric ids as number or string", () => {
     expect(resolveChain(1).id).toBe(1);
     expect(resolveChain("8453").id).toBe(8453);
+    expect(resolveChain("56").id).toBe(56);
   });
 
   it("provides a default RPC for known chains", () => {
     expect(resolveChain("ethereum").rpcUrl).toMatch(/^https?:\/\//);
+    expect(resolveChain("bsc").rpcUrl).toMatch(/^https?:\/\//);
   });
 
   it("honors an RPC override", () => {
@@ -44,7 +53,23 @@ describe("resolveChain", () => {
     expect(c.rpcUrl).toBe("https://rpc.example");
   });
 
+  it("lists known chains for UI clients", () => {
+    const chains = listChains();
+    expect(chains.length).toBeGreaterThan(100);
+    expect(chains).toContainEqual(expect.objectContaining({
+      id: 143,
+      name: "Monad",
+      aliases: expect.arrayContaining(["monad", "monad-mainnet"]),
+      default_rpc_url: "https://rpc.monad.xyz",
+    }));
+    expect(chains).toContainEqual(expect.objectContaining({
+      id: 56,
+      name: "BNB Smart Chain",
+      aliases: expect.arrayContaining(["bsc", "bnb-smart-chain"]),
+    }));
+  });
+
   it("throws for an unknown numeric id without an RPC", () => {
-    expect(() => resolveChain(8217)).toThrowError(ApiError);
+    expect(() => resolveChain(987654321)).toThrowError(ApiError);
   });
 });

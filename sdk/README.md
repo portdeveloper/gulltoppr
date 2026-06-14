@@ -55,10 +55,10 @@ const tx = await usdc.prepare("approve", ["0xspender…", "1000000"], { from: "0
 | `prepareTx(chain, address, fn, args, { from, value?, rpcUrl? })` | prepare_tx |
 | `decodeTx(chain, txHash, opts?)` | decode_tx |
 | `resolveName(nameOrAddress, chain?)` | resolve_name |
+| `chains()` | chain catalog |
 | `contract(chain, address)` | ergonomic handle |
 
-- `chain` is an alias (`"ethereum"`, `"base"`, `"monad"`, `"monad-testnet"`, …)
-  or a numeric id.
+- `chain` is an alias returned by `chains()` or a numeric id.
 - `opts.rpcUrl` overrides the engine's RPC (required for `local`/31337 and any
   EVM chain without a built-in alias).
 - Errors throw `AbiNinjaError` with a stable `.code` (`NOT_A_VIEW_FN`,

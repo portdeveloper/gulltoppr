@@ -92,6 +92,8 @@
               <option value="optimism">optimism</option>
               <option value="arbitrum">arbitrum</option>
               <option value="polygon">polygon</option>
+              <option value="monad">monad</option>
+              <option value="monad-testnet">monad-testnet</option>
             </select>
             <input class="addr" id="addr" placeholder="0x… contract address" spellcheck="false" />
             <button class="go" id="go">Resolve</button>
@@ -148,11 +150,21 @@ const tx = await g.prepareTx("base", addr, "transfer",
     <script>
       const API = "https://api.gulltoppr.dev";
       const $ = (id) => document.getElementById(id);
+      const preferredAliases = {
+        1: "ethereum",
+        8453: "base",
+        10: "optimism",
+        42161: "arbitrum",
+        137: "polygon",
+        143: "monad",
+        10143: "monad-testnet",
+      };
       const examples = [
         { label: "⚠ MEV bot (unverified!)", chain: "ethereum", addr: "0xbdb3ba9ffe392549e1f8658dd2630c141fdf47b6" },
         { label: "DAI (ethereum)", chain: "ethereum", addr: "0x6B175474E89094C44Da98b954EedeAC495271d0F" },
         { label: "USDC (base)", chain: "base", addr: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" },
         { label: "WETH (ethereum)", chain: "ethereum", addr: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2" },
+        { label: "AUSD (monad)", chain: "monad", addr: "0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a" },
       ];
       const chips = $("chips");
       examples.forEach((e) => {
@@ -162,6 +174,27 @@ const tx = await g.prepareTx("base", addr, "transfer",
         c.onclick = () => { $("chain").value = e.chain; $("addr").value = e.addr; resolve(); };
         chips.appendChild(c);
       });
+
+      async function loadChains() {
+        try {
+          const res = await fetch(`${API}/v1/chains`);
+          if (!res.ok) return;
+          const body = await res.json();
+          const select = $("chain");
+          select.innerHTML = "";
+          body.chains.forEach((chain) => {
+            const alias = preferredAliases[chain.id] || chain.aliases?.[0] || String(chain.id);
+            if (!chain.default_rpc_url && alias !== "local") return;
+            const option = document.createElement("option");
+            option.value = alias;
+            option.textContent = `${chain.name} (${chain.id})`;
+            select.appendChild(option);
+          });
+          select.value = "ethereum";
+        } catch {
+          // Keep the static fallback options.
+        }
+      }
 
       function esc(s) { return String(s).replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m])); }
       function list(items) {
@@ -194,6 +227,7 @@ const tx = await g.prepareTx("base", addr, "transfer",
           $("go").disabled = false;
         }
       }
+      loadChains();
       $("go").onclick = resolve;
       $("addr").addEventListener("keydown", (e) => { if (e.key === "Enter") resolve(); });
     </script>

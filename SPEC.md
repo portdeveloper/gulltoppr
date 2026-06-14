@@ -257,6 +257,7 @@ alias). JSON in/out, UTF-8.
 | `prepare_tx` | `POST /v1/{chain}/{address}/prepare` | `{ function, args, from, value? }` |
 | `decode_tx` | `GET /v1/{chain}/tx/{hash}` | · |
 | `resolve_name` | `GET /v1/{chain}/name/{name}` and `GET /v1/{chain}/name/by-address/{address}` | · |
+| chain catalog | `GET /v1/chains` | · |
 
 Conventions:
 - **Provenance also surfaces as headers** on `…/abi` (mirrors gulltoppr's
@@ -296,8 +297,9 @@ MCP-specific guidance baked into the server's tool descriptions:
 
 ## 6. Chains
 
-`chain` accepts an EIP-155 id or an alias. The API ships a built-in table; minimum
-v1 set (extend freely; abi.ninja already supports a long list):
+`chain` accepts an EIP-155 id or an alias. The API exposes `GET /v1/chains`, a
+`viem/chains`-backed catalog for UI clients. The catalog includes `{ id, name,
+aliases, default_rpc_url?, native_currency, block_explorer_url? }`.
 
 | alias | id | default RPC source |
 |-------|----|--------------------|
@@ -310,8 +312,9 @@ v1 set (extend freely; abi.ninja already supports a long list):
 | `monad-testnet` / `monadtestnet` | 10143 | Monad public RPC |
 | `local` | 31337 | **none · caller must pass `rpc_url`** |
 
-Unknown chain id with no `rpc_url` → `UNKNOWN_CHAIN`. ENS resolution is mainnet;
-basenames resolve on Base.
+Unknown chain id with no `rpc_url` → `UNKNOWN_CHAIN`. Known `viem/chains` ids use
+their catalog default RPC unless gulltoppr overrides it with a more reliable public
+endpoint. ENS resolution is mainnet; basenames resolve on Base.
 
 ---
 

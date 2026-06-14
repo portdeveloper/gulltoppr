@@ -11,6 +11,7 @@ import { config } from "./config.js";
 import { safeStringify } from "./util.js";
 import { rateLimit } from "./rateLimit.js";
 import { getClient } from "./clients.js";
+import { listChains } from "./chains.js";
 import { resolveAbi } from "./resolve/index.js";
 import { registry } from "./registry/store.js";
 import { encodeCall } from "./verbs/encode.js";
@@ -53,8 +54,11 @@ app.get("/", (c) =>
     name: "abi.ninja engine",
     spec: "../SPEC.md",
     verbs: ["resolve_abi", "read_contract", "encode_call", "simulate", "prepare_tx", "decode_tx", "resolve_name"],
+    chain_catalog: "/v1/chains",
   }),
 );
+
+app.get("/v1/chains", (c) => send(c, { chains: listChains() }));
 
 // Registry lookup — the open selector→signature commons. 4-byte (0x + 8 hex,
 // functions/errors) or 32-byte (0x + 64 hex, event topic0). Chain-independent.
