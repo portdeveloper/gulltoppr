@@ -10,50 +10,72 @@
     <meta property="og:description" content="The universal, safe, agent-native interface to any EVM contract, including the ones nobody verified." />
     <style>
       :root {
-        --bg: #0b0e14; --panel: #131822; --panel2: #1a2130; --line: #232c3d;
-        --ink: #e6edf3; --dim: #8b98ad; --acc: #6ee7b7; --acc2: #7aa2f7;
-        --warn: #fbbf24; --bad: #f87171;
+        --bg: #090a0a; --panel: #111413; --panel2: #171b18; --line: #2a322d;
+        --ink: #f0f3ed; --dim: #98a29a; --acc: #59d98e; --acc2: #e6b450;
+        --warn: #e6b450; --bad: #ff7f6e; --muted: #202620;
       }
       * { box-sizing: border-box; }
+      * { scrollbar-color: #67736b #101211; scrollbar-width: thin; }
+      *::-webkit-scrollbar { width: 10px; height: 10px; }
+      *::-webkit-scrollbar-track { background: #101211; }
+      *::-webkit-scrollbar-thumb { background: #67736b; border: 2px solid #101211; border-radius: 999px; }
       body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
       code, pre, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
       a { color: var(--acc2); text-decoration: none; }
       a:hover { text-decoration: underline; }
-      .wrap { max-width: 880px; margin: 0 auto; padding: 0 20px; }
+      .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
       header { padding: 64px 0 28px; text-align: center; }
       .logo { font-size: 40px; font-weight: 800; letter-spacing: -0.02em; }
       .logo .n { color: var(--acc); }
       .tag { font-size: 20px; margin: 14px 0 6px; }
       .sub { color: var(--dim); max-width: 620px; margin: 0 auto; }
       .cta { margin-top: 22px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-      .btn { display: inline-block; padding: 9px 16px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font-weight: 600; }
+      .btn { display: inline-block; padding: 9px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font-weight: 600; }
       .btn.primary { background: var(--acc); color: #062018; border-color: var(--acc); }
       section { margin: 34px 0; }
       h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--dim); margin: 0 0 12px; }
-      .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
-      .row { display: flex; gap: 10px; flex-wrap: wrap; }
-      select, input { background: var(--panel2); color: var(--ink); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; font: inherit; }
-      input.addr { flex: 1; min-width: 240px; font-family: ui-monospace, monospace; }
-      button.go { background: var(--acc); color: #062018; border: none; border-radius: 9px; padding: 10px 18px; font-weight: 700; cursor: pointer; }
+      .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 18px; box-shadow: inset 0 1px 0 rgba(255,255,255,.03); }
+      .commandbar { border: 1px solid var(--line); border-radius: 8px; background: #0d0f0e; overflow: hidden; }
+      .prompt { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--dim); font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--acc); box-shadow: 14px 0 0 var(--warn), 28px 0 0 var(--bad); margin-right: 30px; }
+      .row { display: grid; grid-template-columns: minmax(170px, 260px) minmax(0, 1fr) auto; gap: 10px; padding: 12px; align-items: stretch; }
+      .field { min-width: 0; position: relative; }
+      .field::before { content: attr(data-label); position: absolute; top: 7px; left: 12px; color: var(--dim); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; pointer-events: none; }
+      input { width: 100%; height: 58px; background: var(--panel2); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 25px 12px 8px; font: inherit; outline: none; }
+      input:focus { border-color: #3c7a54; box-shadow: 0 0 0 3px rgba(89,217,142,.12); }
+      input.addr, input.chain { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      input.chain { font-family: inherit; font-weight: 700; }
+      button.go { background: var(--acc); color: #062018; border: none; border-radius: 8px; padding: 0 24px; min-width: 118px; font-weight: 800; cursor: pointer; }
       button.go:disabled { opacity: .6; cursor: default; }
       .chips { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
-      .chip { font-size: 12px; color: var(--dim); border: 1px solid var(--line); border-radius: 20px; padding: 3px 10px; cursor: pointer; background: var(--panel2); }
+      .chip { font-size: 12px; color: var(--dim); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; cursor: pointer; background: var(--muted); }
       .chip:hover { color: var(--ink); }
       #out { margin-top: 16px; }
-      .badge { display: inline-block; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+      .badge { display: inline-block; font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 999px; }
       .b-verified { background: #0f2e22; color: var(--acc); border: 1px solid #1d5b44; }
       .b-decompiled { background: #2e260f; color: var(--warn); border: 1px solid #5b4a1d; }
       .b-partial, .b-selector-only { background: #1c2433; color: var(--dim); border: 1px solid var(--line); }
       .meta { color: var(--dim); font-size: 13px; margin: 8px 0; }
-      .fns { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px; }
-      .fns h3 { margin: 0 0 6px; font-size: 13px; }
-      .fns ul { margin: 0; padding-left: 0; list-style: none; max-height: 220px; overflow: auto; }
-      .fns li { font-family: ui-monospace, monospace; font-size: 12.5px; color: var(--ink); padding: 2px 0; border-bottom: 1px solid var(--line); }
+      .result-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+      .result-meta { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dim); }
+      .result-meta code { color: var(--ink); }
+      .fns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-top: 14px; }
+      .fn-col { min-width: 0; border: 1px solid var(--line); border-radius: 8px; background: #0d0f0e; overflow: hidden; }
+      .fn-col h3 { margin: 0; padding: 8px 10px; border-bottom: 1px solid var(--line); color: var(--ink); font-size: 13px; }
+      .fn-list { margin: 0; padding: 0; list-style: none; max-height: 288px; overflow-y: auto; overflow-x: hidden; }
+      .fn-list li { min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; color: var(--ink); padding: 6px 10px; border-bottom: 1px solid rgba(42,50,45,.75); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .fn-list li:nth-child(even) { background: rgba(255,255,255,.015); }
       .err { color: var(--bad); font-family: ui-monospace, monospace; font-size: 13px; }
-      pre { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; overflow: auto; font-size: 13px; }
-      .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+      pre { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; overflow: auto; font-size: 13px; }
+      .grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+      .grid2 > div { min-width: 0; }
       footer { color: var(--dim); font-size: 13px; text-align: center; padding: 40px 0; border-top: 1px solid var(--line); margin-top: 40px; }
-      @media (max-width: 640px) { .fns, .grid2 { grid-template-columns: 1fr; } }
+      @media (max-width: 760px) {
+        .row { grid-template-columns: 1fr; }
+        button.go { height: 48px; }
+        .fns, .grid2 { grid-template-columns: 1fr; }
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+      }
     </style>
   </head>
   <body>
@@ -85,18 +107,26 @@
       <section>
         <h2>Try it: resolve any contract</h2>
         <div class="panel">
-          <div class="row">
-            <select id="chain">
-              <option value="ethereum">ethereum</option>
-              <option value="base">base</option>
-              <option value="optimism">optimism</option>
-              <option value="arbitrum">arbitrum</option>
-              <option value="polygon">polygon</option>
-              <option value="monad">monad</option>
-              <option value="monad-testnet">monad-testnet</option>
-            </select>
-            <input class="addr" id="addr" placeholder="0x… contract address" spellcheck="false" />
-            <button class="go" id="go">Resolve</button>
+          <div class="commandbar">
+            <div class="prompt"><span class="dot"></span><span>gulltoppr resolve --abi</span></div>
+            <div class="row">
+              <div class="field" data-label="chain">
+                <input class="chain" id="chain" list="chain-options" value="ethereum" autocomplete="off" spellcheck="false" />
+                <datalist id="chain-options">
+                  <option value="ethereum" label="Ethereum (1)"></option>
+                  <option value="base" label="Base (8453)"></option>
+                  <option value="optimism" label="OP Mainnet (10)"></option>
+                  <option value="arbitrum" label="Arbitrum One (42161)"></option>
+                  <option value="polygon" label="Polygon (137)"></option>
+                  <option value="monad" label="Monad (143)"></option>
+                  <option value="monad-testnet" label="Monad Testnet (10143)"></option>
+                </datalist>
+              </div>
+              <div class="field" data-label="contract">
+                <input class="addr" id="addr" placeholder="0x…" spellcheck="false" />
+              </div>
+              <button class="go" id="go">Resolve</button>
+            </div>
           </div>
           <div class="chips" id="chips"></div>
           <div id="out"></div>
@@ -180,25 +210,28 @@ const tx = await g.prepareTx("base", addr, "transfer",
           const res = await fetch(`${API}/v1/chains`);
           if (!res.ok) return;
           const body = await res.json();
-          const select = $("chain");
-          select.innerHTML = "";
+          const options = $("chain-options");
+          options.innerHTML = "";
           body.chains.forEach((chain) => {
             const alias = preferredAliases[chain.id] || chain.aliases?.[0] || String(chain.id);
             if (!chain.default_rpc_url && alias !== "local") return;
             const option = document.createElement("option");
             option.value = alias;
-            option.textContent = `${chain.name} (${chain.id})`;
-            select.appendChild(option);
+            option.label = `${chain.name} (${chain.id})`;
+            options.appendChild(option);
           });
-          select.value = "ethereum";
+          $("chain").value = "ethereum";
         } catch {
           // Keep the static fallback options.
         }
       }
 
       function esc(s) { return String(s).replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m])); }
+      function attr(s) { return esc(s).replace(/"/g, "&quot;"); }
       function list(items) {
-        return "<ul>" + (items.length ? items.map((f) => "<li>" + esc(f.signature) + "</li>").join("") : "<li class='meta'>none</li>") + "</ul>";
+        return "<ul class='fn-list'>" + (items.length
+          ? items.map((f) => `<li title="${attr(f.signature)}">${esc(f.signature)}</li>`).join("")
+          : "<li class='meta'>none</li>") + "</ul>";
       }
 
       async function resolve() {
@@ -217,10 +250,10 @@ const tx = await g.prepareTx("base", addr, "transfer",
           const tok = data.token?.symbol ? ` · token <b>${esc(data.token.symbol)}</b>` : "";
           const proxy = data.proxy ? ` · ${esc(data.proxy.pattern)} proxy → impl <code>${esc(data.abi_for.slice(0, 10))}…</code>` : "";
           out.innerHTML =
-            `<div>${badge} <span class="meta">source: ${esc(p.source)}${tok}${proxy}${data.cached ? " · cached" : ""}</span></div>` +
+            `<div class="result-head">${badge}<span class="result-meta" title="${attr(`source: ${p.source}${data.token?.symbol ? ` · token ${data.token.symbol}` : ""}${data.proxy ? ` · ${data.proxy.pattern} proxy → impl ${data.abi_for}` : ""}${data.cached ? " · cached" : ""}`)}">source: ${esc(p.source)}${tok}${proxy}${data.cached ? " · cached" : ""}</span></div>` +
             (p.names_synthetic ? `<p class="meta" style="color:var(--warn)">⚠ Decompiled: function/param names are inferred. ${esc(p.notes || "")}</p>` : "") +
-            `<div class="fns"><div><h3>Read (${data.interface.reads.length})</h3>${list(data.interface.reads)}</div>` +
-            `<div><h3>Write (${data.interface.writes.length})</h3>${list(data.interface.writes)}</div></div>`;
+            `<div class="fns"><div class="fn-col"><h3>Read (${data.interface.reads.length})</h3>${list(data.interface.reads)}</div>` +
+            `<div class="fn-col"><h3>Write (${data.interface.writes.length})</h3>${list(data.interface.writes)}</div></div>`;
         } catch (e) {
           out.innerHTML = `<p class='err'>${esc(e.message)}</p>`;
         } finally {
