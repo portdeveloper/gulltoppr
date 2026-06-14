@@ -10,7 +10,8 @@
     "mcp": "tsx src/mcp.ts",
     "mcp:http": "tsx src/mcp-http.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:live": "RUN_LIVE_CONTRACT_TESTS=1 vitest run test/liveContracts.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",

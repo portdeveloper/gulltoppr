@@ -23,6 +23,7 @@ npm run mcp            # MCP server: stdio, 7 tools (for agent clients)
 npm run mcp:http       # MCP server: Streamable HTTP (remote agents)
 npm run typecheck      # tsc --noEmit
 npm test               # vitest unit tests (cache, chains, ladder helpers, args, errors)
+npm run test:live      # opt-in live contract smoke tests (RPC/decompiler/network)
 ```
 
 ### Env
