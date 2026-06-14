@@ -79,8 +79,9 @@ The accumulated data is published as a **CC0 dataset**:
 (regenerate any time from `GET /v1/registry/export`).
 
 `{chain}` is an alias (`ethereum`, `base`, `optimism`, `arbitrum`, `polygon`,
-`local`) or a numeric id. Pass `?rpc_url=` to override the RPC (required for chains
-with no default, e.g. `local`/31337).
+`monad`, `monad-testnet`, `local`) or a numeric id. Pass `?rpc_url=` to override
+the RPC (required for chains with no default, e.g. `local`/31337; this is how any
+EVM chain works before it has a built-in alias).
 
 ```bash
 curl localhost:8787/v1/ethereum/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/abi

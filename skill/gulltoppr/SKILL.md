@@ -93,7 +93,7 @@ const prep = await ninja.prepareTx("base", r.address, "transfer", ["0xTo…", "1
   ground truth.
 - **Surface warnings verbatim.** `prepare_tx.warnings` exists so the user sees risk.
 - **Pass `from`** for writes/simulations: it's the user's address (no key needed).
-- **Local chains** (`local`/31337): pass `rpcUrl`.
+- **Local or unlisted EVM chains** (`local`/31337, custom networks): pass `rpcUrl`.
 
 For the full verb signatures, chain table, error codes, and a worked end-to-end
 example, see `reference.md`.

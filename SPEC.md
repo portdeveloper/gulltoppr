@@ -306,6 +306,8 @@ v1 set (extend freely; abi.ninja already supports a long list):
 | `optimism` | 10 | publicnode |
 | `arbitrum` | 42161 | publicnode |
 | `polygon` | 137 | publicnode |
+| `monad` / `monad-mainnet` | 143 | Monad public RPC |
+| `monad-testnet` / `monadtestnet` | 10143 | Monad public RPC |
 | `local` | 31337 | **none · caller must pass `rpc_url`** |
 
 Unknown chain id with no `rpc_url` → `UNKNOWN_CHAIN`. ENS resolution is mainnet;

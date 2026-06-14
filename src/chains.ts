@@ -21,6 +21,22 @@ interface ChainEntry {
   defaultRpc?: string;
 }
 
+const monad = defineChain({
+  id: 143,
+  name: "Monad",
+  nativeCurrency: { name: "Monad", symbol: "MON", decimals: 18 },
+  rpcUrls: { default: { http: ["https://rpc.monad.xyz"] } },
+  blockExplorers: { default: { name: "MonadVision", url: "https://monadvision.com" } },
+});
+
+const monadTestnet = defineChain({
+  id: 10143,
+  name: "Monad Testnet",
+  nativeCurrency: { name: "Monad", symbol: "MON", decimals: 18 },
+  rpcUrls: { default: { http: ["https://testnet-rpc.monad.xyz"] } },
+  blockExplorers: { default: { name: "MonadVision Testnet", url: "https://testnet.monadvision.com" } },
+});
+
 // publicnode hostnames are reliable from this environment (eth.llamarpc is not).
 const ENTRIES: Record<string, ChainEntry> = {
   ethereum: { id: 1, chain: mainnet, defaultRpc: "https://ethereum-rpc.publicnode.com" },
@@ -29,6 +45,10 @@ const ENTRIES: Record<string, ChainEntry> = {
   optimism: { id: 10, chain: optimism, defaultRpc: "https://optimism-rpc.publicnode.com" },
   arbitrum: { id: 42161, chain: arbitrum, defaultRpc: "https://arbitrum-one-rpc.publicnode.com" },
   polygon: { id: 137, chain: polygon, defaultRpc: "https://polygon-bor-rpc.publicnode.com" },
+  monad: { id: 143, chain: monad, defaultRpc: "https://rpc.monad.xyz" },
+  "monad-mainnet": { id: 143, chain: monad, defaultRpc: "https://rpc.monad.xyz" },
+  "monad-testnet": { id: 10143, chain: monadTestnet, defaultRpc: "https://testnet-rpc.monad.xyz" },
+  monadtestnet: { id: 10143, chain: monadTestnet, defaultRpc: "https://testnet-rpc.monad.xyz" },
   local: { id: 31337, chain: defineChain({ id: 31337, name: "Local", nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 }, rpcUrls: { default: { http: ["http://127.0.0.1:8545"] } } }) },
 };
 

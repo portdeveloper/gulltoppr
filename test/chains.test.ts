@@ -10,6 +10,10 @@ describe("resolveChain", () => {
     expect(resolveChain("optimism").id).toBe(10);
     expect(resolveChain("arbitrum").id).toBe(42161);
     expect(resolveChain("polygon").id).toBe(137);
+    expect(resolveChain("monad").id).toBe(143);
+    expect(resolveChain("monad-mainnet").id).toBe(143);
+    expect(resolveChain("monad-testnet").id).toBe(10143);
+    expect(resolveChain("monadtestnet").id).toBe(10143);
   });
 
   it("resolves numeric ids as number or string", () => {

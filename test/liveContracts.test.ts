@@ -14,6 +14,8 @@ const BASE_PROXY = "0xca808b3eada02d53073e129b25f74b31d8647ae0";
 const SEPOLIA_UNVERIFIED = "0x759c0e9d7858566df8ab751026bedce462ff42df";
 const BNB_ETH = "0x2170ed0880ac9a755fd29b2688956bd959f933f8";
 const VICTION_TOKEN = "0x381B31409e4D220919B2cFF012ED94d70135A59e";
+const MONAD_AUSD = "0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a";
+const MONAD_TESTNET_WETH = "0x45477f4709771331db81944A5E20eF95Bc7BA2D7";
 const HOLDER = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
 
 async function request(path: string, init?: RequestInit): Promise<Response> {
@@ -115,6 +117,34 @@ describeLive("live contract interactions", () => {
       expectUintRead(read, "balanceOf");
     },
     60_000,
+  );
+
+  it(
+    "loads a Monad mainnet token via default RPC and reads balanceOf",
+    async () => {
+      const resolved = await json(`/v1/monad/${MONAD_AUSD}/abi`);
+      expect(resolved.address).toBe(MONAD_AUSD);
+      expect(resolved.chain).toBe(143);
+      expectReadNamed(resolved, "balanceOf");
+
+      const read = await json(`/v1/monad/${MONAD_AUSD}/read`, postRead("balanceOf", [HOLDER]));
+      expectUintRead(read, "balanceOf");
+    },
+    90_000,
+  );
+
+  it(
+    "loads a Monad testnet token via default RPC and reads balanceOf",
+    async () => {
+      const resolved = await json(`/v1/monad-testnet/${MONAD_TESTNET_WETH}/abi`);
+      expect(resolved.address).toBe(MONAD_TESTNET_WETH);
+      expect(resolved.chain).toBe(10143);
+      expectReadNamed(resolved, "balanceOf");
+
+      const read = await json(`/v1/monad-testnet/${MONAD_TESTNET_WETH}/read`, postRead("balanceOf", [HOLDER]));
+      expectUintRead(read, "balanceOf");
+    },
+    90_000,
   );
 
   it(

@@ -40,8 +40,9 @@ RPC; `state_diff` is not yet populated. So absence of asset_changes ≠ "no tran
 ## Chains
 
 Alias or numeric id: `ethereum`/`mainnet` (1), `base` (8453), `optimism` (10),
-`arbitrum` (42161), `polygon` (137), `local` (31337, **pass `rpcUrl`**). Any other
-id works if you pass `rpcUrl`. ENS resolves on mainnet.
+`arbitrum` (42161), `polygon` (137), `monad`/`monad-mainnet` (143),
+`monad-testnet`/`monadtestnet` (10143), `local` (31337, **pass `rpcUrl`**). Any
+other id works if you pass `rpcUrl`. ENS resolves on mainnet.
 
 ## Error codes
 
