@@ -207,7 +207,7 @@ const tx = await g.prepareTx("base", addr, "transfer",
 
       async function loadChains() {
         try {
-          const res = await fetch(`${API}/v1/chains`);
+          const res = await fetch(`${API}/v1/chains?testnets=false&has_default_rpc=true`);
           if (!res.ok) return;
           const body = await res.json();
           const options = $("chain-options");

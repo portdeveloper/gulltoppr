@@ -51,7 +51,7 @@ npm run test:live      # opt-in live contract smoke tests (RPC/decompiler/networ
 | `prepare_tx` | `POST /v1/{chain}/{address}/prepare` · body `{function, args, from, value?}` |
 | `decode_tx` | `GET /v1/{chain}/tx/{hash}` |
 | `resolve_name` | `GET /v1/{chain}/name/{name}` · `GET /v1/{chain}/name/by-address/{address}` |
-| chain catalog | `GET /v1/chains` · viem-backed aliases/default RPCs for UI clients |
+| chain catalog | `GET /v1/chains?q=&testnets=&has_default_rpc=` · viem-backed aliases/default RPCs for UI clients |
 | registry lookup | `GET /v1/lookup/{selector}` · 4-byte (function/error) or 32-byte (event topic0), chain-independent |
 | registry stats | `GET /v1/registry/stats` |
 

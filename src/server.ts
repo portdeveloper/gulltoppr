@@ -29,6 +29,14 @@ function send(c: Context, data: unknown, status: ContentfulStatusCode = 200) {
 
 const rpc = (c: Context) => c.req.query("rpc_url") || undefined;
 
+function queryBool(c: Context, key: string): boolean | undefined {
+  const raw = c.req.query(key);
+  if (raw == null || raw === "") return undefined;
+  if (/^(1|true|yes)$/i.test(raw)) return true;
+  if (/^(0|false|no)$/i.test(raw)) return false;
+  throw new ApiError("INVALID_ARGS", `${key} must be true or false.`);
+}
+
 export const app = new Hono();
 
 // CORS — the engine is a public, non-credentialed read API consumed by browser
@@ -58,7 +66,15 @@ app.get("/", (c) =>
   }),
 );
 
-app.get("/v1/chains", (c) => send(c, { chains: listChains() }));
+app.get("/v1/chains", (c) =>
+  send(c, {
+    chains: listChains({
+      q: c.req.query("q"),
+      testnets: queryBool(c, "testnets"),
+      hasDefaultRpc: queryBool(c, "has_default_rpc"),
+    }),
+  }),
+);
 
 // Registry lookup — the open selector→signature commons. 4-byte (0x + 8 hex,
 // functions/errors) or 32-byte (0x + 64 hex, event topic0). Chain-independent.

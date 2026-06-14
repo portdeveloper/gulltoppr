@@ -87,6 +87,20 @@ describe("HTTP layer", () => {
     }));
   });
 
+  it("GET /v1/chains filters by query, testnets, and default RPC", async () => {
+    const res = await app.request("/v1/chains?q=monad&testnets=false&has_default_rpc=true");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.chains).toContainEqual(expect.objectContaining({ id: 143, name: "Monad" }));
+    expect(body.chains).not.toContainEqual(expect.objectContaining({ id: 10143 }));
+  });
+
+  it("GET /v1/chains rejects invalid boolean filters", async () => {
+    const res = await app.request("/v1/chains?testnets=maybe");
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("INVALID_ARGS");
+  });
+
   it("sets rate-limit headers on API routes", async () => {
     const res = await app.request("/v1/ethereum/notanaddress/abi");
     expect(res.headers.get("ratelimit-limit")).toBe("120");

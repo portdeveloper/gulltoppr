@@ -86,7 +86,7 @@ function addEntry(exportName: string, chain: Chain) {
     aliases,
   };
 
-  if (!BY_ID.has(chain.id)) BY_ID.set(chain.id, entry);
+  if (exportName === "local" || !BY_ID.has(chain.id)) BY_ID.set(chain.id, entry);
   for (const alias of aliases) {
     ENTRIES[alias] ??= entry;
   }
@@ -118,17 +118,44 @@ export interface ChainInfo {
   block_explorer_url?: string;
 }
 
-export function listChains(): ChainInfo[] {
+export interface ChainListFilters {
+  q?: string;
+  testnets?: boolean;
+  hasDefaultRpc?: boolean;
+}
+
+function toChainInfo(entry: ChainEntry): ChainInfo {
+  return {
+    id: entry.id,
+    name: entry.chain.name,
+    aliases: entry.aliases,
+    ...(entry.defaultRpc ? { default_rpc_url: entry.defaultRpc } : {}),
+    native_currency: entry.chain.nativeCurrency,
+    ...(entry.chain.blockExplorers?.default?.url ? { block_explorer_url: entry.chain.blockExplorers.default.url } : {}),
+  };
+}
+
+function isTestnet(chain: ChainInfo): boolean {
+  const haystack = [chain.name, ...chain.aliases].join(" ").toLowerCase();
+  return /\b(testnet|sepolia|goerli|holesky|hoodi|fuji|mumbai|amoy|devnet|local|anvil|hardhat)\b/.test(haystack);
+}
+
+export function listChains(filters: ChainListFilters = {}): ChainInfo[] {
+  const q = filters.q?.trim().toLowerCase();
   return [...BY_ID.values()]
-    .sort((a, b) => a.chain.name.localeCompare(b.chain.name) || a.id - b.id)
-    .map((entry) => ({
-      id: entry.id,
-      name: entry.chain.name,
-      aliases: entry.aliases,
-      ...(entry.defaultRpc ? { default_rpc_url: entry.defaultRpc } : {}),
-      native_currency: entry.chain.nativeCurrency,
-      ...(entry.chain.blockExplorers?.default?.url ? { block_explorer_url: entry.chain.blockExplorers.default.url } : {}),
-    }));
+    .map(toChainInfo)
+    .filter((chain) => {
+      if (filters.hasDefaultRpc === true && !chain.default_rpc_url) return false;
+      if (filters.hasDefaultRpc === false && chain.default_rpc_url) return false;
+      if (filters.testnets === false && isTestnet(chain)) return false;
+      if (filters.testnets === true && !isTestnet(chain)) return false;
+      if (q) {
+        const haystack = `${chain.id} ${chain.name} ${chain.aliases.join(" ")} ${chain.native_currency.symbol}`.toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
+      return true;
+    })
+    .sort((a, b) => a.name.localeCompare(b.name) || a.id - b.id);
 }
 
 /**

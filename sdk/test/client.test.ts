@@ -28,6 +28,12 @@ describe("AbiNinja client", () => {
     expect(chains[0]).toMatchObject({ id: 143, name: "Monad" });
   });
 
+  it("chains appends filter query params", async () => {
+    const { fn, calls } = fakeFetch(() => ({ body: { chains: [] } }));
+    await new AbiNinja({ baseUrl: BASE, fetch: fn }).chains({ q: "monad", testnets: false, hasDefaultRpc: true });
+    expect(calls[0].url).toBe(`${BASE}/v1/chains?q=monad&testnets=false&has_default_rpc=true`);
+  });
+
   it("resolveAbi GETs the abi route and parses the body", async () => {
     const { fn, calls } = fakeFetch(() => ({ body: { address: ADDR, abi: [], provenance: { source: "etherscan" } } }));
     const r = await new AbiNinja({ baseUrl: BASE, fetch: fn }).resolveAbi("ethereum", ADDR);

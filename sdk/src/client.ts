@@ -32,6 +32,12 @@ export interface CallOpts {
   rpcUrl?: string;
 }
 
+export interface ChainListOpts {
+  q?: string;
+  testnets?: boolean;
+  hasDefaultRpc?: boolean;
+}
+
 interface SimulateArgs {
   from: Address;
   // high-level form:
@@ -64,8 +70,13 @@ export class AbiNinja {
   // ── verbs ───────────────────────────────────────────────────────────────────
 
   /** Supported chain catalog, backed by viem/chains plus gulltoppr RPC overrides. */
-  async chains(): Promise<ChainInfo[]> {
-    const body = await this.get<{ chains: ChainInfo[] }>("/v1/chains");
+  async chains(opts: ChainListOpts = {}): Promise<ChainInfo[]> {
+    const params = new URLSearchParams();
+    if (opts.q) params.set("q", opts.q);
+    if (opts.testnets !== undefined) params.set("testnets", String(opts.testnets));
+    if (opts.hasDefaultRpc !== undefined) params.set("has_default_rpc", String(opts.hasDefaultRpc));
+    const qs = params.toString();
+    const body = await this.get<{ chains: ChainInfo[] }>(`/v1/chains${qs ? `?${qs}` : ""}`);
     return body.chains;
   }
 
@@ -129,7 +140,9 @@ export class AbiNinja {
 
   private url(path: string, opts?: CallOpts): string {
     const u = this.baseUrl + path;
-    return opts?.rpcUrl ? `${u}?rpc_url=${encodeURIComponent(opts.rpcUrl)}` : u;
+    if (!opts?.rpcUrl) return u;
+    const join = u.includes("?") ? "&" : "?";
+    return `${u}${join}rpc_url=${encodeURIComponent(opts.rpcUrl)}`;
   }
 
   private async get<T>(path: string, opts?: CallOpts): Promise<T> {

@@ -69,6 +69,15 @@ describe("resolveChain", () => {
     }));
   });
 
+  it("filters listed chains by query, testnet status, and default RPC", () => {
+    expect(listChains({ q: "monad" }).map((c) => c.id)).toEqual(expect.arrayContaining([143, 10143]));
+    expect(listChains({ q: "monad", testnets: false }).map((c) => c.id)).toContain(143);
+    expect(listChains({ q: "monad", testnets: false }).map((c) => c.id)).not.toContain(10143);
+    expect(listChains({ q: "monad", testnets: true }).map((c) => c.id)).toContain(10143);
+    expect(listChains({ q: "local", hasDefaultRpc: true }).map((c) => c.id)).not.toContain(31337);
+    expect(listChains({ q: "local", hasDefaultRpc: false }).map((c) => c.id)).toContain(31337);
+  });
+
   it("throws for an unknown numeric id without an RPC", () => {
     expect(() => resolveChain(987654321)).toThrowError(ApiError);
   });

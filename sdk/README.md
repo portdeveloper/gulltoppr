@@ -55,7 +55,7 @@ const tx = await usdc.prepare("approve", ["0xspender…", "1000000"], { from: "0
 | `prepareTx(chain, address, fn, args, { from, value?, rpcUrl? })` | prepare_tx |
 | `decodeTx(chain, txHash, opts?)` | decode_tx |
 | `resolveName(nameOrAddress, chain?)` | resolve_name |
-| `chains()` | chain catalog |
+| `chains({ q?, testnets?, hasDefaultRpc? })` | chain catalog |
 | `contract(chain, address)` | ergonomic handle |
 
 - `chain` is an alias returned by `chains()` or a numeric id.

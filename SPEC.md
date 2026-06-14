@@ -257,7 +257,7 @@ alias). JSON in/out, UTF-8.
 | `prepare_tx` | `POST /v1/{chain}/{address}/prepare` | `{ function, args, from, value? }` |
 | `decode_tx` | `GET /v1/{chain}/tx/{hash}` | · |
 | `resolve_name` | `GET /v1/{chain}/name/{name}` and `GET /v1/{chain}/name/by-address/{address}` | · |
-| chain catalog | `GET /v1/chains` | · |
+| chain catalog | `GET /v1/chains` | `q?`, `testnets?`, `has_default_rpc?` |
 
 Conventions:
 - **Provenance also surfaces as headers** on `…/abi` (mirrors gulltoppr's
@@ -300,6 +300,12 @@ MCP-specific guidance baked into the server's tool descriptions:
 `chain` accepts an EIP-155 id or an alias. The API exposes `GET /v1/chains`, a
 `viem/chains`-backed catalog for UI clients. The catalog includes `{ id, name,
 aliases, default_rpc_url?, native_currency, block_explorer_url? }`.
+
+Catalog filters:
+- `q`: case-insensitive match over id, name, aliases, and native symbol.
+- `testnets`: `true` for only testnets/local/dev chains, `false` to exclude them.
+- `has_default_rpc`: `true` for chains gulltoppr can use without `rpc_url`,
+  `false` for chains that require a caller-supplied `rpc_url`.
 
 | alias | id | default RPC source |
 |-------|----|--------------------|
