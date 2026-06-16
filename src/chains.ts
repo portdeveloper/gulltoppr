@@ -109,6 +109,8 @@ export interface ChainInfo {
   id: number;
   name: string;
   aliases: string[];
+  testnet: boolean;
+  has_default_rpc: boolean;
   default_rpc_url?: string;
   native_currency: {
     name: string;
@@ -124,11 +126,45 @@ export interface ChainListFilters {
   hasDefaultRpc?: boolean;
 }
 
+function looksLikeTestnet(name: string, aliases: string[]): boolean {
+  const haystack = [name, ...aliases].join(" ").toLowerCase();
+  return /\b(testnet|sepolia|goerli|holesky|hoodi|fuji|mumbai|amoy|devnet|local|anvil|hardhat)\b/.test(haystack);
+}
+
+function validateRpcUrl(rpcOverride?: string): string | undefined {
+  if (rpcOverride === undefined) return undefined;
+  try {
+    if (/\s/.test(rpcOverride)) {
+      throw new Error("whitespace is not allowed");
+    }
+    const url = new URL(rpcOverride);
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      throw new Error("unsupported protocol");
+    }
+    return rpcOverride;
+  } catch {
+    throw new ApiError("INVALID_ARGS", "`rpc_url` must be an http(s) URL.");
+  }
+}
+
+function numericChainId(input: number | string): number | undefined {
+  if (typeof input === "number") {
+    if (Number.isSafeInteger(input) && input > 0) return input;
+    throw new ApiError("UNKNOWN_CHAIN", `Invalid chain id ${input}.`);
+  }
+  if (!/^\d+$/.test(input)) return undefined;
+  const id = Number(input);
+  if (Number.isSafeInteger(id) && id > 0) return id;
+  throw new ApiError("UNKNOWN_CHAIN", `Invalid chain id ${input}.`);
+}
+
 function toChainInfo(entry: ChainEntry): ChainInfo {
   return {
     id: entry.id,
     name: entry.chain.name,
     aliases: entry.aliases,
+    testnet: looksLikeTestnet(entry.chain.name, entry.aliases),
+    has_default_rpc: Boolean(entry.defaultRpc),
     ...(entry.defaultRpc ? { default_rpc_url: entry.defaultRpc } : {}),
     native_currency: entry.chain.nativeCurrency,
     ...(entry.chain.blockExplorers?.default?.url ? { block_explorer_url: entry.chain.blockExplorers.default.url } : {}),
@@ -136,8 +172,14 @@ function toChainInfo(entry: ChainEntry): ChainInfo {
 }
 
 function isTestnet(chain: ChainInfo): boolean {
-  const haystack = [chain.name, ...chain.aliases].join(" ").toLowerCase();
-  return /\b(testnet|sepolia|goerli|holesky|hoodi|fuji|mumbai|amoy|devnet|local|anvil|hardhat)\b/.test(haystack);
+  return chain.testnet;
+}
+
+function chainMatchesQuery(chain: ChainInfo, query: string): boolean {
+  const haystack = `${chain.id} ${chain.name} ${chain.aliases.join(" ")} ${chain.native_currency.symbol}`.toLowerCase();
+  if (haystack.includes(query)) return true;
+  if (haystack.replace(/\s+/g, "").includes(query.replace(/\s+/g, ""))) return true;
+  return query.split(/\s+/).every((token) => haystack.includes(token));
 }
 
 export function listChains(filters: ChainListFilters = {}): ChainInfo[] {
@@ -149,10 +191,7 @@ export function listChains(filters: ChainListFilters = {}): ChainInfo[] {
       if (filters.hasDefaultRpc === false && chain.default_rpc_url) return false;
       if (filters.testnets === false && isTestnet(chain)) return false;
       if (filters.testnets === true && !isTestnet(chain)) return false;
-      if (q) {
-        const haystack = `${chain.id} ${chain.name} ${chain.aliases.join(" ")} ${chain.native_currency.symbol}`.toLowerCase();
-        if (!haystack.includes(q)) return false;
-      }
+      if (q && !chainMatchesQuery(chain, q)) return false;
       return true;
     })
     .sort((a, b) => a.name.localeCompare(b.name) || a.id - b.id);
@@ -164,19 +203,20 @@ export function listChains(filters: ChainListFilters = {}): ChainInfo[] {
  */
 export function resolveChain(input: number | string, rpcOverride?: string): ResolvedChain {
   let entry: ChainEntry | undefined;
+  const rpcUrlOverride = validateRpcUrl(rpcOverride);
+  const id = numericChainId(input);
 
-  if (typeof input === "number" || /^\d+$/.test(String(input))) {
-    entry = BY_ID.get(Number(input));
+  if (id !== undefined) {
+    entry = BY_ID.get(id);
   } else {
     entry = ENTRIES[String(input).toLowerCase()];
   }
 
-  const rpcUrl = rpcOverride || entry?.defaultRpc;
+  const rpcUrl = rpcUrlOverride || entry?.defaultRpc;
   if (!rpcUrl) {
     // Unknown chain id with no default and no override → genuinely unusable.
     if (!entry) {
-      const id = Number(input);
-      if (Number.isFinite(id)) {
+      if (id !== undefined) {
         // Build an ad-hoc chain so arbitrary ids work *when* an rpc is supplied.
         throw new ApiError("UNKNOWN_CHAIN", `Unknown chain ${input} and no rpc_url supplied. Pass ?rpc_url= to use it.`);
       }
@@ -186,9 +226,11 @@ export function resolveChain(input: number | string, rpcOverride?: string): Reso
   }
 
   if (entry) return { id: entry.id, chain: entry.chain, rpcUrl };
+  if (id === undefined) {
+    throw new ApiError("UNKNOWN_CHAIN", `Unknown chain alias "${input}".`);
+  }
 
   // Arbitrary numeric id + rpc override: synthesize a chain.
-  const id = Number(input);
   const chain = defineChain({
     id,
     name: `Chain ${id}`,

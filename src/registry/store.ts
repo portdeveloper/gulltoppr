@@ -55,6 +55,10 @@ interface Backend {
   stats(): { selectors: Record<string, number>; bytecodes: number };
 }
 
+function normalizeHexKey(value: string): Hex {
+  return value.toLowerCase() as Hex;
+}
+
 class SqliteBackend implements Backend {
   private ins: any;
   private sel: any;
@@ -86,9 +90,31 @@ class SqliteBackend implements Backend {
         first_seen INTEGER NOT NULL
       );
     `);
-    this.ins = db.prepare(
-      "INSERT OR IGNORE INTO registry_selectors (selector, kind, signature, proof, abi_json, chain, address, first_seen) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-    );
+    this.ins = db.prepare(`
+      INSERT INTO registry_selectors (selector, kind, signature, proof, abi_json, chain, address, first_seen)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(selector, kind, signature) DO UPDATE SET
+        proof = CASE
+          WHEN excluded.proof = 'verified-source' AND registry_selectors.proof <> 'verified-source'
+            THEN excluded.proof
+          ELSE registry_selectors.proof
+        END,
+        abi_json = CASE
+          WHEN excluded.proof = 'verified-source' OR registry_selectors.proof <> 'verified-source'
+            THEN COALESCE(excluded.abi_json, registry_selectors.abi_json)
+          ELSE registry_selectors.abi_json
+        END,
+        chain = CASE
+          WHEN excluded.proof = 'verified-source' OR registry_selectors.proof <> 'verified-source'
+            THEN COALESCE(excluded.chain, registry_selectors.chain)
+          ELSE registry_selectors.chain
+        END,
+        address = CASE
+          WHEN excluded.proof = 'verified-source' OR registry_selectors.proof <> 'verified-source'
+            THEN COALESCE(excluded.address, registry_selectors.address)
+          ELSE registry_selectors.address
+        END
+    `);
     this.sel = db.prepare("SELECT * FROM registry_selectors WHERE selector = ?");
     this.bcGet = db.prepare("SELECT * FROM registry_bytecode WHERE skeleton_hash = ?");
     this.bcSet = db.prepare(
@@ -96,7 +122,7 @@ class SqliteBackend implements Backend {
     );
   }
   insertSelector(e: SelectorEntry): void {
-    this.ins.run(e.selector, e.kind, e.signature, e.proof, e.abi_item ? JSON.stringify(e.abi_item) : null, e.chain ?? null, e.address ?? null, Date.now());
+    this.ins.run(normalizeHexKey(e.selector), e.kind, e.signature, e.proof, e.abi_item ? JSON.stringify(e.abi_item) : null, e.chain ?? null, e.address ?? null, Date.now());
   }
   private rowToEntry(r: any): SelectorEntry {
     return {
@@ -110,14 +136,14 @@ class SqliteBackend implements Backend {
     };
   }
   lookupSelector(selector: string): SelectorEntry[] {
-    return (this.sel.all(selector) as any[]).map((r) => this.rowToEntry(r));
+    return (this.sel.all(normalizeHexKey(selector)) as any[]).map((r) => this.rowToEntry(r));
   }
   exportSelectors(): SelectorEntry[] {
     const rows = this.db.prepare("SELECT * FROM registry_selectors ORDER BY kind, selector, signature").all() as any[];
     return rows.map((r) => this.rowToEntry(r));
   }
   getBytecode(hash: string): BytecodeEntry | undefined {
-    const r = this.bcGet.get(hash) as any;
+    const r = this.bcGet.get(normalizeHexKey(hash)) as any;
     if (!r) return undefined;
     return {
       skeleton_hash: r.skeleton_hash,
@@ -130,7 +156,7 @@ class SqliteBackend implements Backend {
     };
   }
   setBytecode(e: BytecodeEntry): void {
-    this.bcSet.run(e.skeleton_hash, JSON.stringify(e.abi), e.source, e.confidence, e.names_synthetic ? 1 : 0, e.chain, e.address, Date.now());
+    this.bcSet.run(normalizeHexKey(e.skeleton_hash), JSON.stringify(e.abi), e.source, e.confidence, e.names_synthetic ? 1 : 0, e.chain, e.address, Date.now());
   }
   stats(): { selectors: Record<string, number>; bytecodes: number } {
     const selectors: Record<string, number> = {};
@@ -146,12 +172,24 @@ class MemoryBackend implements Backend {
   private selectors = new Map<string, SelectorEntry[]>();
   private bytecodes = new Map<string, BytecodeEntry>();
   insertSelector(e: SelectorEntry): void {
-    const list = this.selectors.get(e.selector) ?? [];
-    if (!list.some((x) => x.kind === e.kind && x.signature === e.signature)) list.push(e);
-    this.selectors.set(e.selector, list);
+    const normalized = { ...e, selector: normalizeHexKey(e.selector) };
+    const list = this.selectors.get(normalized.selector) ?? [];
+    const existing = list.find((x) => x.kind === normalized.kind && x.signature === normalized.signature);
+    if (existing) {
+      const canUpdateMetadata = normalized.proof === "verified-source" || existing.proof !== "verified-source";
+      if (normalized.proof === "verified-source" && existing.proof !== "verified-source") {
+        existing.proof = "verified-source";
+      }
+      if (canUpdateMetadata && normalized.abi_item !== undefined) existing.abi_item = normalized.abi_item;
+      if (canUpdateMetadata && normalized.chain !== undefined) existing.chain = normalized.chain;
+      if (canUpdateMetadata && normalized.address !== undefined) existing.address = normalized.address;
+    } else {
+      list.push(normalized);
+    }
+    this.selectors.set(normalized.selector, list);
   }
   lookupSelector(selector: string): SelectorEntry[] {
-    return this.selectors.get(selector) ?? [];
+    return this.selectors.get(normalizeHexKey(selector)) ?? [];
   }
   exportSelectors(): SelectorEntry[] {
     return [...this.selectors.values()]
@@ -159,10 +197,11 @@ class MemoryBackend implements Backend {
       .sort((a, b) => a.kind.localeCompare(b.kind) || a.selector.localeCompare(b.selector) || a.signature.localeCompare(b.signature));
   }
   getBytecode(hash: string): BytecodeEntry | undefined {
-    return this.bytecodes.get(hash);
+    return this.bytecodes.get(normalizeHexKey(hash));
   }
   setBytecode(e: BytecodeEntry): void {
-    if (!this.bytecodes.has(e.skeleton_hash)) this.bytecodes.set(e.skeleton_hash, e);
+    const normalized = { ...e, skeleton_hash: normalizeHexKey(e.skeleton_hash) };
+    if (!this.bytecodes.has(normalized.skeleton_hash)) this.bytecodes.set(normalized.skeleton_hash, normalized);
   }
   stats(): { selectors: Record<string, number>; bytecodes: number } {
     const selectors: Record<string, number> = {};
@@ -192,6 +231,29 @@ function makeBackend(): Backend {
 function errorSelector(item: { name: string; inputs?: readonly unknown[] }): { signature: string; selector: Hex } {
   const signature = toFunctionSignature({ ...(item as object), type: "function", outputs: [], stateMutability: "nonpayable" } as unknown as AbiFunction);
   return { signature, selector: keccak256(stringToBytes(signature)).slice(0, 10) as Hex };
+}
+
+function provenSelector(entry: Pick<SelectorEntry, "kind" | "signature">): Hex | undefined {
+  try {
+    if (entry.kind === "function") return toFunctionSelector(entry.signature) as Hex;
+    if (entry.kind === "event") return toEventSelector(entry.signature) as Hex;
+    return keccak256(stringToBytes(entry.signature)).slice(0, 10) as Hex;
+  } catch {
+    return undefined;
+  }
+}
+
+function abiItemSignature(kind: SelectorKind, abiItem: unknown): string | undefined {
+  try {
+    if (!abiItem || typeof abiItem !== "object") return undefined;
+    const item = abiItem as { type?: string };
+    if (kind === "function" && item.type === "function") return toFunctionSignature(abiItem as AbiFunction);
+    if (kind === "event" && item.type === "event") return toEventSignature(abiItem as AbiEvent);
+    if (kind === "error" && item.type === "error") return errorSelector(abiItem as { name: string; inputs?: readonly unknown[] }).signature;
+    return undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export class Registry {
@@ -237,9 +299,12 @@ export class Registry {
     }
   }
 
-  /** Record an LLM-proposed signature that passed keccak + type verification. */
-  recordProven(entry: Omit<SelectorEntry, "proof">): void {
+  /** Record a proposed signature only when keccak proves it maps to the selector. */
+  recordProven(entry: Omit<SelectorEntry, "proof">): boolean {
+    if (provenSelector(entry) !== normalizeHexKey(entry.selector)) return false;
+    if (entry.abi_item && abiItemSignature(entry.kind, entry.abi_item) !== entry.signature) return false;
     this.backend.insertSelector({ ...entry, proof: "keccak-proven" });
+    return true;
   }
 
   lookup(selector: string): SelectorEntry[] {

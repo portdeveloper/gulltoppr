@@ -24,8 +24,15 @@ export const config = {
    * Etherscan key) instead of resolving in-process. */
   engineUrl: envString("ENGINE_URL", "https://api.gulltoppr.dev"),
 
+  /** Mainnet RPC used for ENS/Basenames Universal Resolver calls. Basenames can be
+   * computationally heavy, so production should set a private/mainnet RPC here. */
+  ensRpcUrl: envString("ENS_RPC_URL", "https://ethereum-rpc.publicnode.com"),
+
   /** Single multichain Etherscan v2 key (ladder rung 1). Empty disables rung 1. */
   etherscanApiKey: envString("ETHERSCAN_API_KEY", ""),
+  /** Per-process budget for the shared Etherscan key. 0 disables the budget. */
+  etherscanRateLimit: envNumber("ETHERSCAN_RATE_LIMIT", 4),
+  etherscanRateWindowMs: envNumber("ETHERSCAN_RATE_WINDOW_SEC", 1) * 1000,
 
   /** Base URL used to build prepare_tx hand-off deeplinks (SPEC §9). */
   signingBaseUrl: envString("SIGNING_BASE_URL", "https://abi.ninja"),
@@ -34,6 +41,9 @@ export const config = {
   etherscanTimeoutMs: envNumber("ETHERSCAN_TIMEOUT_MS", 8000),
   sourcifyTimeoutMs: envNumber("SOURCIFY_TIMEOUT_MS", 8000),
   heimdallTimeoutMs: envNumber("HEIMDALL_TIMEOUT_MS", 30000),
+  /** Per-process cap on outbound gulltoppr/heimdall work. 0 disables the cap. */
+  heimdallConcurrency: envNumber("HEIMDALL_CONCURRENCY", 2),
+  heimdallQueueTimeoutMs: envNumber("HEIMDALL_QUEUE_TIMEOUT_MS", 5000),
 
   /** Per-IP rate limit (fixed window). ~2 req/s/IP by default, which keeps a flood
    * of distinct lookups within the shared Etherscan key's budget. Set RATE_LIMIT=0

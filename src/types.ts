@@ -1,7 +1,7 @@
 /**
  * Core data types for the engine — the JSON shapes from SPEC.md §2, expressed in
- * TypeScript. These are the contract the REST routes, the (future) MCP server, and
- * the (future) npm SDK all share. Keep this file in lockstep with SPEC.md §2.
+ * TypeScript. These are the contract the REST routes, MCP server, and npm SDK all
+ * share. Keep this file in lockstep with SPEC.md §2.
  */
 import type { Abi, AbiFunction, Address, Hex } from "viem";
 
@@ -16,6 +16,17 @@ export type ProvenanceSource =
 
 export type Confidence = "verified" | "partial" | "decompiled" | "selector-only";
 
+export interface BytecodeMatchProvenance {
+  /** EIP-155 chain id where the reusable bytecode skeleton was first resolved. */
+  chain: number;
+  /** Contract address whose metadata-stripped runtime bytecode matched this result. */
+  address: Address;
+  /** Original resolver source that produced the reused ABI. */
+  source: ProvenanceSource;
+  /** Original resolver confidence before clone/proxy confidence caps. */
+  confidence: Confidence;
+}
+
 export interface Provenance {
   source: ProvenanceSource;
   confidence: Confidence;
@@ -25,6 +36,8 @@ export interface Provenance {
   names_synthetic: boolean;
   /** Human docs (NatSpec) available. */
   natspec: boolean;
+  /** Present when ABI reuse came from an identical metadata-stripped runtime bytecode skeleton. */
+  bytecode_match?: BytecodeMatchProvenance;
   notes?: string;
 }
 
@@ -95,10 +108,15 @@ export interface AbiResult {
   provenance: Provenance;
   proxy?: ProxyChain;
   token?: TokenMeta;
-  /** Address the ABI actually describes (implementation if a proxy). */
+  /** Address the ABI actually describes (implementation if classic proxy; proxy address for merged diamond ABIs). */
   abi_for: Address;
   cached: boolean;
 }
+
+export type CompactAbiResult = Omit<AbiResult, "abi"> & {
+  /** Raw ABI intentionally omitted for token-efficient agent context. */
+  abi_omitted: true;
+};
 
 // §2.5 — the shared call descriptor.
 export interface Call {
@@ -152,13 +170,82 @@ export interface UnsignedTx {
   gas?: string;
 }
 
+export interface WalletTransactionRequest {
+  from: Address;
+  to: Address;
+  data: Hex;
+  /** JSON-RPC quantity hex, ready for eth_sendTransaction. */
+  value: Hex;
+  /** JSON-RPC quantity hex, ready for eth_sendTransaction. */
+  gas?: Hex;
+}
+
+export interface WalletRequest {
+  /** Routing metadata; eth_sendTransaction itself still runs in the user's wallet. */
+  chainId: number;
+  method: "eth_sendTransaction";
+  params: [WalletTransactionRequest];
+}
+
+export type PreparedTxRiskLevel = "low" | "medium" | "high" | "blocked";
+
+export type PreparedTxSafetyReason =
+  | "abi_names_inferred"
+  | "proxy"
+  | "simulation_failed"
+  | "native_value"
+  | "spending_approval"
+  | "asset_outflow";
+
+export interface PreparedTxSafety {
+  signing_recommended: boolean;
+  risk_level: PreparedTxRiskLevel;
+  requires_human_confirmation: boolean;
+  reasons: PreparedTxSafetyReason[];
+}
+
 // §2.8 — prepared tx (the hand-off payload).
 export interface PreparedTx {
   unsigned_tx: UnsignedTx;
   simulation: Simulation;
   human_summary: string;
   deeplink: string;
+  /** EIP-1193 request when signing is recommended. */
+  wallet_request?: WalletRequest;
+  /** Must show before signing. */
   warnings: string[];
+  safety: PreparedTxSafety;
+}
+
+// §2.9 — decoded transaction.
+export interface DecodeTxProvenance {
+  source: string;
+  confidence: "decompiled";
+  verified: false;
+  names_synthetic: true;
+}
+
+export interface DecodedCallArg extends IoParam {
+  value: unknown;
+}
+
+export interface DecodedCall {
+  to: Address;
+  function: string;
+  signature: string;
+  args: DecodedCallArg[];
+  abi_for: Address;
+  provenance: Provenance;
+}
+
+export interface DecodeTxResult {
+  chain: number;
+  tx_hash: Hex;
+  source: string;
+  cached: boolean;
+  decoded: unknown;
+  provenance: DecodeTxProvenance;
+  decoded_call?: DecodedCall;
 }
 
 /** Internal: an ABI resolution before manifest/token enrichment. Carries the raw

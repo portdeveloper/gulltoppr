@@ -1,7 +1,24 @@
 import { describe, it, expect } from "vitest";
-import { ApiError } from "../src/errors.js";
+import { ApiError, ERROR_CODES } from "../src/errors.js";
 
 describe("ApiError", () => {
+  it("exports the stable engine error code list", () => {
+    expect(ERROR_CODES).toEqual([
+      "INVALID_ADDRESS",
+      "INVALID_ARGS",
+      "UNKNOWN_CHAIN",
+      "AMBIGUOUS_FUNCTION",
+      "FUNCTION_NOT_FOUND",
+      "NOT_A_VIEW_FN",
+      "NOT_A_WRITE_FN",
+      "ABI_NOT_FOUND",
+      "DECOMPILE_FAILED",
+      "RPC_ERROR",
+      "UPSTREAM_TIMEOUT",
+      "RATE_LIMITED",
+    ]);
+  });
+
   it("maps codes to stable HTTP statuses", () => {
     expect(new ApiError("INVALID_ADDRESS", "x").status).toBe(400);
     expect(new ApiError("FUNCTION_NOT_FOUND", "x").status).toBe(404);

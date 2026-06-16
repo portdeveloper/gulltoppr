@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { Abi } from "viem";
-import { buildInterface } from "../src/resolve/interface.js";
+import { buildInterface, searchContractMethods } from "../src/resolve/interface.js";
 import type { Provenance } from "../src/types.js";
 
 const verified: Provenance = { source: "etherscan", confidence: "verified", verified: true, names_synthetic: false, natspec: true };
@@ -37,5 +37,27 @@ describe("buildInterface", () => {
   it("adds an amount hint when token decimals are known", () => {
     const i = buildInterface(abi, verified, { kind: "erc20", symbol: "USDC", decimals: 6 });
     expect(i.writes.find((w) => w.function === "transfer")?.hint).toContain("6 decimals");
+  });
+
+  it("renders exact amount hints for zero and large decimal counts", () => {
+    const zero = buildInterface(abi, verified, { kind: "erc20", symbol: "ZERO", decimals: 0 });
+    expect(zero.writes.find((w) => w.function === "transfer")?.hint).toBe(
+      'amount is in base units (0 decimals): 1 ZERO = "1"',
+    );
+
+    const ethLike = buildInterface(abi, verified, { kind: "erc20", symbol: "WETH", decimals: 18 });
+    expect(ethLike.writes.find((w) => w.function === "transfer")?.hint).toBe(
+      'amount is in base units (18 decimals): 1 WETH = "1000000000000000000"',
+    );
+  });
+
+  it("searches methods by spaced signatures and query tokens", () => {
+    const i = buildInterface(abi, verified, { kind: "erc20", symbol: "TOK", decimals: 18 });
+    expect(searchContractMethods(i, { q: "transfer(address, uint256)" }).map((match) => match.method.signature)).toEqual([
+      "transfer(address,uint256)",
+    ]);
+    expect(searchContractMethods(i, { q: "transfer 18 decimals" }).map((match) => match.method.signature)).toEqual([
+      "transfer(address,uint256)",
+    ]);
   });
 });

@@ -5,6 +5,7 @@
 import { createPublicClient, http, type PublicClient } from "viem";
 import { mainnet, base } from "viem/chains";
 import { resolveChain, type ResolvedChain } from "./chains.js";
+import { config } from "./config.js";
 
 const cache = new Map<string, PublicClient>();
 
@@ -33,7 +34,7 @@ export function getEnsClient(): PublicClient {
   if (!ensClient) {
     ensClient = createPublicClient({
       chain: mainnet,
-      transport: http("https://ethereum-rpc.publicnode.com", { timeout: 15_000 }),
+      transport: http(config.ensRpcUrl, { timeout: 15_000 }),
     }) as PublicClient;
   }
   return ensClient;

@@ -7,6 +7,8 @@
 import type { Abi, Address } from "viem";
 import { config } from "../config.js";
 import { fetchWithTimeout } from "../util.js";
+import { recordMetric } from "../metrics.js";
+import { FixedWindowBudget } from "../upstreamBudget.js";
 
 export interface EtherscanHit {
   abi: Abi;
@@ -17,20 +19,22 @@ export interface EtherscanHit {
   implementation?: Address;
 }
 
+const budget = new FixedWindowBudget(config.etherscanRateLimit, config.etherscanRateWindowMs);
+
 export async function fromEtherscan(chainId: number, address: Address): Promise<EtherscanHit | null> {
   if (!config.etherscanApiKey) return null;
+  const budgetCheck = budget.check();
+  if (!budgetCheck.ok) {
+    recordMetric("rung.etherscan_budget", "miss", 0, `budget exhausted; reset in ${budgetCheck.resetSec}s`);
+    return null;
+  }
 
   const url =
     `https://api.etherscan.io/v2/api?chainid=${chainId}` +
     `&module=contract&action=getsourcecode&address=${address}` +
     `&apikey=${config.etherscanApiKey}`;
 
-  let res: Response;
-  try {
-    res = await fetchWithTimeout(url, config.etherscanTimeoutMs, "Etherscan");
-  } catch {
-    return null; // ladder is best-effort per rung; never let one rung 500 the request
-  }
+  const res = await fetchWithTimeout(url, config.etherscanTimeoutMs, "Etherscan");
   if (!res.ok) return null;
 
   const body = (await res.json()) as { status: string; result: unknown };

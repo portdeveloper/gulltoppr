@@ -19,6 +19,11 @@ describe("selectFunction", () => {
     expect(selectFunction(abi, "foo(address)").inputs[0]?.type).toBe("address");
   });
 
+  it("normalizes harmless whitespace in function refs", () => {
+    expect(selectFunction(abi, " transfer ").name).toBe("transfer");
+    expect(selectFunction(abi, " foo( address ) ").inputs[0]?.type).toBe("address");
+  });
+
   it("throws AMBIGUOUS_FUNCTION for an overloaded bare name", () => {
     expect(() => selectFunction(abi, "foo")).toThrowError(/overloaded/i);
   });

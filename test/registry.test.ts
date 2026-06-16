@@ -85,9 +85,125 @@ describe("registry store", () => {
 
   it("recordProven stores keccak-proven entries; stats counts by kind:proof", () => {
     const r = new Registry();
-    r.recordProven({ selector: "0xa9059cbb", kind: "function", signature: "transfer(address,uint256)" });
+    expect(r.recordProven({ selector: "0xa9059cbb", kind: "function", signature: "transfer(address,uint256)" })).toBe(true);
     expect(r.lookup("0xA9059CBB")[0]!.proof).toBe("keccak-proven"); // lookup is case-insensitive
     expect(r.stats().selectors["function:keccak-proven"]).toBe(1);
+
+    expect(r.recordProven({ selector: "0xa9059cbb", kind: "function", signature: "balanceOf(address)" })).toBe(false);
+    expect(r.lookup("0xa9059cbb")).toHaveLength(1);
+  });
+
+  it("upgrades keccak-proven entries when verified source later confirms the same signature", () => {
+    const r = new Registry();
+    expect(r.recordProven({ selector: "0xa9059cbb", kind: "function", signature: "transfer(address,uint256)" })).toBe(true);
+
+    r.recordVerifiedAbi(1, ADDR, VERIFIED_ABI as any);
+
+    expect(r.lookup("0xa9059cbb")).toEqual([
+      expect.objectContaining({
+        selector: "0xa9059cbb",
+        kind: "function",
+        signature: "transfer(address,uint256)",
+        proof: "verified-source",
+        chain: 1,
+        address: ADDR,
+        abi_item: expect.objectContaining({ type: "function", name: "transfer" }),
+      }),
+    ]);
+    expect(r.stats().selectors["function:verified-source"]).toBe(1);
+    expect(r.stats().selectors["function:keccak-proven"]).toBeUndefined();
+  });
+
+  it("does not let later keccak-proven metadata downgrade a verified-source entry", () => {
+    const r = new Registry();
+    r.recordVerifiedAbi(1, ADDR, VERIFIED_ABI as any);
+
+    expect(r.recordProven({
+      selector: "0xa9059cbb",
+      kind: "function",
+      signature: "transfer(address,uint256)",
+      abi_item: {
+        type: "function",
+        name: "transfer",
+        stateMutability: "nonpayable",
+        inputs: [
+          { name: "to", type: "address" },
+          { name: "amount", type: "uint256" },
+        ],
+        outputs: [],
+      },
+      chain: 8453,
+      address: "0x00000000000000000000000000000000000000bb" as const,
+    })).toBe(true);
+
+    expect(r.lookup("0xa9059cbb")).toEqual([
+      expect.objectContaining({
+        proof: "verified-source",
+        chain: 1,
+        address: ADDR,
+        abi_item: expect.objectContaining({
+          type: "function",
+          name: "transfer",
+          outputs: [{ name: "", type: "bool" }],
+        }),
+      }),
+    ]);
+    expect(r.stats().selectors["function:verified-source"]).toBe(1);
+    expect(r.stats().selectors["function:keccak-proven"]).toBeUndefined();
+  });
+
+  it("recordProven rejects contradictory ABI metadata", () => {
+    const r = new Registry();
+    expect(r.recordProven({
+      selector: "0xa9059cbb",
+      kind: "function",
+      signature: "transfer(address,uint256)",
+      abi_item: {
+        type: "function",
+        name: "approve",
+        stateMutability: "nonpayable",
+        inputs: [
+          { name: "spender", type: "address" },
+          { name: "amount", type: "uint256" },
+        ],
+        outputs: [],
+      },
+    })).toBe(false);
+    expect(r.lookup("0xa9059cbb")).toHaveLength(0);
+
+    expect(r.recordProven({
+      selector: "0xa9059cbb",
+      kind: "function",
+      signature: "transfer(address,uint256)",
+      abi_item: VERIFIED_ABI[0],
+    })).toBe(true);
+    expect(r.lookup("0xa9059cbb")[0]).toMatchObject({
+      signature: "transfer(address,uint256)",
+      proof: "keccak-proven",
+    });
+  });
+
+  it("normalizes selector writes and exports a deterministic commons order", () => {
+    const r = new Registry();
+    const later = "later(uint256)";
+    const earlier = "earlier(address)";
+    const laterSelector = toFunctionSelector(later);
+    const earlierSelector = toFunctionSelector(earlier);
+    r.recordProven({ selector: laterSelector.toUpperCase() as `0x${string}`, kind: "function", signature: later });
+    r.recordProven({ selector: earlierSelector.toUpperCase() as `0x${string}`, kind: "function", signature: earlier });
+    r.recordProven({ selector: laterSelector, kind: "function", signature: later });
+
+    expect(r.lookup(laterSelector)).toHaveLength(1);
+    expect(r.lookup(laterSelector.toUpperCase())).toMatchObject([{ selector: laterSelector, signature: later }]);
+
+    const exported = r
+      .exportSelectors()
+      .filter((e) => e.signature === later || e.signature === earlier)
+      .map((e) => `${e.kind}:${e.selector}:${e.signature}`);
+    expect(exported).toEqual([
+      `function:${earlierSelector}:${earlier}`,
+      `function:${laterSelector}:${later}`,
+    ].sort());
   });
 
   it("bytecode index: first write wins, round-trips provenance", () => {
@@ -100,6 +216,14 @@ describe("registry store", () => {
     expect(hit.names_synthetic).toBe(false);
     expect(hit.abi).toHaveLength(3);
     expect(r.getBytecode(skeletonHash("0x6002"))).toBeUndefined();
+  });
+
+  it("normalizes bytecode hash writes before lookup", () => {
+    const r = new Registry();
+    const hash = skeletonHash("0x6001");
+    r.recordBytecode({ skeleton_hash: hash.toUpperCase() as `0x${string}`, abi: VERIFIED_ABI as any, source: "etherscan", confidence: "verified", names_synthetic: false, chain: 1, address: ADDR });
+
+    expect(r.getBytecode(hash)).toMatchObject({ skeleton_hash: hash, source: "etherscan" });
   });
 });
 
@@ -120,13 +244,13 @@ describe("registry enrich (decompiled ABI name recovery)", () => {
   });
 
   it("does not guess when a selector is ambiguous at the same proof grade", () => {
-    // 4byte-style junk collision: two distinct proven signatures for one selector
-    registry.recordProven({ selector: "0x11112222", kind: "function", signature: "realName(uint256)" });
-    registry.recordProven({ selector: "0x11112222", kind: "function", signature: "collisionMined(address)" });
+    // Real 4-byte collision: two distinct signatures hash to 0x77dbd42e.
+    registry.recordProven({ selector: "0x77dbd42e", kind: "function", signature: "f38491(uint256)" });
+    registry.recordProven({ selector: "0x77dbd42e", kind: "function", signature: "f116643(uint256)" });
     const { abi, recovered } = enrichDecompiledAbi([
-      { type: "function", name: "Unresolved_11112222", stateMutability: "nonpayable", inputs: [{ name: "arg0", type: "uint256" }], outputs: [] },
+      { type: "function", name: "Unresolved_77dbd42e", stateMutability: "nonpayable", inputs: [{ name: "arg0", type: "uint256" }], outputs: [] },
     ] as any);
     expect(recovered).toBe(0);
-    expect((abi[0] as any).name).toBe("Unresolved_11112222");
+    expect((abi[0] as any).name).toBe("Unresolved_77dbd42e");
   });
 });

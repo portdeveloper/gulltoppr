@@ -15,9 +15,10 @@
  * mutability is unknown (reported nonpayable), outputs unknown. Honest
  * provenance (`selector-only`, names_synthetic) is the whole point.
  */
-import { parseAbiItem } from "viem";
+import { parseAbiItem, toFunctionSelector } from "viem";
 import type { Abi, AbiFunction, Hex } from "viem";
 import { registry } from "../registry/store.js";
+import { trackMetric } from "../metrics.js";
 
 const MAX_SELECTORS = 64; // dispatcher scans on weird bytecode can explode; cap
 const MAX_4BYTE_LOOKUPS = 32;
@@ -46,31 +47,37 @@ export function extractSelectors(code: Hex): Hex[] {
   return [...out].slice(0, MAX_SELECTORS) as Hex[];
 }
 
-/** Best proven signature for a selector from our registry, or null. */
-function fromRegistry(selector: Hex): string | null {
+/** Best proven signature for a selector from our registry. Ambiguous means do not guess. */
+function fromRegistry(selector: Hex): { signature: string | null; ambiguous: boolean } {
   const fns = registry.lookup(selector).filter((e) => e.kind === "function");
   for (const proof of ["verified-source", "keccak-proven"] as const) {
     const sigs = new Set(fns.filter((e) => e.proof === proof).map((e) => e.signature));
-    if (sigs.size === 1) return [...sigs][0]!;
-    if (sigs.size > 1) return null; // ambiguous — don't guess
+    if (sigs.size === 1) return { signature: [...sigs][0]!, ambiguous: false };
+    if (sigs.size > 1) return { signature: null, ambiguous: true };
   }
-  return null;
+  return { signature: null, ambiguous: false };
 }
 
 /** Oldest 4byte.directory entry for a selector, or null. */
 async function from4byteDir(selector: Hex): Promise<string | null> {
-  try {
+  return trackMetric("rung.4byte.directory", async () => {
     const res = await fetch(
       `https://www.4byte.directory/api/v1/signatures/?hex_signature=${selector}&ordering=created_at`,
       { signal: AbortSignal.timeout(FOURBYTE_TIMEOUT_MS), headers: { accept: "application/json" } },
     );
     if (!res.ok) return null;
     const data = (await res.json()) as { results?: { text_signature?: string }[] };
-    const sig = data.results?.[0]?.text_signature;
-    return typeof sig === "string" && sig.length <= 512 ? sig : null;
-  } catch {
+    for (const result of data.results ?? []) {
+      const sig = result.text_signature;
+      if (typeof sig !== "string" || sig.length > 512) continue;
+      try {
+        if (toFunctionSelector(sig).toLowerCase() === selector) return sig;
+      } catch {
+        // Ignore malformed public labels and keep scanning this selector page.
+      }
+    }
     return null;
-  }
+  }).catch(() => null);
 }
 
 function toAbiFunction(signature: string): AbiFunction | null {
@@ -101,11 +108,11 @@ export async function fromFourByte(code: Hex | undefined): Promise<FourByteResul
     let fn: AbiFunction | null = null;
 
     const proven = fromRegistry(selector);
-    if (proven) {
-      fn = toAbiFunction(proven);
+    if (proven.signature) {
+      fn = toAbiFunction(proven.signature);
       if (fn) counts.registry++;
     }
-    if (!fn && fourbyteBudget > 0) {
+    if (!fn && !proven.ambiguous && fourbyteBudget > 0) {
       fourbyteBudget--;
       const sig = await from4byteDir(selector);
       if (sig) {

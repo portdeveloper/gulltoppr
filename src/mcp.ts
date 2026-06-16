@@ -4,8 +4,9 @@
  */
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { createMcpServer } from "./mcp-server.js";
+import { MCP_TOOLS } from "./agentSurface.js";
 
 const transport = new StdioServerTransport();
 await createMcpServer().connect(transport);
 // stderr is safe to log on (stdout is the JSON-RPC channel).
-console.error("gulltoppr MCP server ready on stdio (7 tools).");
+console.error(`gulltoppr MCP server ready on stdio (${MCP_TOOLS.length} tools).`);

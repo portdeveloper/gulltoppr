@@ -36,6 +36,13 @@ describe("resolveChain", () => {
 
   it("honors an RPC override", () => {
     expect(resolveChain("base", "https://x.example").rpcUrl).toBe("https://x.example");
+    expect(resolveChain("base", "http://127.0.0.1:8545").rpcUrl).toBe("http://127.0.0.1:8545");
+  });
+
+  it("rejects invalid RPC overrides before building a client", () => {
+    expect(() => resolveChain("base", "not-a-url")).toThrowError(ApiError);
+    expect(() => resolveChain("base", "ws://rpc.example")).toThrowError(ApiError);
+    expect(() => resolveChain("base", "https://rpc.example/a b")).toThrowError(ApiError);
   });
 
   it("throws UNKNOWN_CHAIN for an unknown alias", () => {
@@ -53,6 +60,18 @@ describe("resolveChain", () => {
     expect(c.rpcUrl).toBe("https://rpc.example");
   });
 
+  it("requires the rpc_url escape hatch to use a numeric chain id", () => {
+    expect(() => resolveChain("notachain", "https://rpc.example")).toThrowError(ApiError);
+    expect(() => resolveChain("", "https://rpc.example")).toThrowError(ApiError);
+  });
+
+  it("rejects invalid numeric chain ids even with an RPC override", () => {
+    expect(() => resolveChain(0, "https://rpc.example")).toThrowError(ApiError);
+    expect(() => resolveChain(-1, "https://rpc.example")).toThrowError(ApiError);
+    expect(() => resolveChain(Number.NaN, "https://rpc.example")).toThrowError(ApiError);
+    expect(() => resolveChain("9007199254740992", "https://rpc.example")).toThrowError(ApiError);
+  });
+
   it("lists known chains for UI clients", () => {
     const chains = listChains();
     expect(chains.length).toBeGreaterThan(100);
@@ -60,12 +79,16 @@ describe("resolveChain", () => {
       id: 143,
       name: "Monad",
       aliases: expect.arrayContaining(["monad", "monad-mainnet"]),
+      testnet: false,
+      has_default_rpc: true,
       default_rpc_url: "https://rpc.monad.xyz",
     }));
     expect(chains).toContainEqual(expect.objectContaining({
       id: 56,
       name: "BNB Smart Chain",
       aliases: expect.arrayContaining(["bsc", "bnb-smart-chain"]),
+      testnet: false,
+      has_default_rpc: true,
     }));
   });
 
@@ -73,9 +96,11 @@ describe("resolveChain", () => {
     expect(listChains({ q: "monad" }).map((c) => c.id)).toEqual(expect.arrayContaining([143, 10143]));
     expect(listChains({ q: "monad", testnets: false }).map((c) => c.id)).toContain(143);
     expect(listChains({ q: "monad", testnets: false }).map((c) => c.id)).not.toContain(10143);
-    expect(listChains({ q: "monad", testnets: true }).map((c) => c.id)).toContain(10143);
+    expect(listChains({ q: "monad", testnets: true })).toContainEqual(expect.objectContaining({ id: 10143, testnet: true }));
+    expect(listChains({ q: "bnb chain" })).toContainEqual(expect.objectContaining({ id: 56, name: "BNB Smart Chain" }));
+    expect(listChains({ q: "bnbsmart" })).toContainEqual(expect.objectContaining({ id: 56, name: "BNB Smart Chain" }));
     expect(listChains({ q: "local", hasDefaultRpc: true }).map((c) => c.id)).not.toContain(31337);
-    expect(listChains({ q: "local", hasDefaultRpc: false }).map((c) => c.id)).toContain(31337);
+    expect(listChains({ q: "local", hasDefaultRpc: false })).toContainEqual(expect.objectContaining({ id: 31337, has_default_rpc: false }));
   });
 
   it("throws for an unknown numeric id without an RPC", () => {

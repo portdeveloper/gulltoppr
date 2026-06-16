@@ -18,12 +18,7 @@ async function tryMatch(
   kind: "full_match" | "partial_match",
 ): Promise<Abi | null> {
   const url = `https://repo.sourcify.dev/contracts/${kind}/${chainId}/${address}/metadata.json`;
-  let res: Response;
-  try {
-    res = await fetchWithTimeout(url, config.sourcifyTimeoutMs, "Sourcify");
-  } catch {
-    return null;
-  }
+  const res = await fetchWithTimeout(url, config.sourcifyTimeoutMs, "Sourcify");
   if (!res.ok) return null;
   const meta = (await res.json()) as { output?: { abi?: Abi } };
   return meta.output?.abi ?? null;

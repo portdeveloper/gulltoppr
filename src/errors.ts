@@ -4,18 +4,22 @@
  * the MCP server will surface in its `isError` results.
  */
 
-export type ErrorCode =
-  | "INVALID_ADDRESS"
-  | "INVALID_ARGS"
-  | "UNKNOWN_CHAIN"
-  | "AMBIGUOUS_FUNCTION"
-  | "FUNCTION_NOT_FOUND"
-  | "NOT_A_VIEW_FN"
-  | "ABI_NOT_FOUND"
-  | "DECOMPILE_FAILED"
-  | "RPC_ERROR"
-  | "UPSTREAM_TIMEOUT"
-  | "RATE_LIMITED";
+export const ERROR_CODES = [
+  "INVALID_ADDRESS",
+  "INVALID_ARGS",
+  "UNKNOWN_CHAIN",
+  "AMBIGUOUS_FUNCTION",
+  "FUNCTION_NOT_FOUND",
+  "NOT_A_VIEW_FN",
+  "NOT_A_WRITE_FN",
+  "ABI_NOT_FOUND",
+  "DECOMPILE_FAILED",
+  "RPC_ERROR",
+  "UPSTREAM_TIMEOUT",
+  "RATE_LIMITED",
+] as const;
+
+export type ErrorCode = (typeof ERROR_CODES)[number];
 
 const STATUS: Record<ErrorCode, number> = {
   INVALID_ADDRESS: 400,
@@ -24,6 +28,7 @@ const STATUS: Record<ErrorCode, number> = {
   AMBIGUOUS_FUNCTION: 400,
   FUNCTION_NOT_FOUND: 404,
   NOT_A_VIEW_FN: 400,
+  NOT_A_WRITE_FN: 400,
   ABI_NOT_FOUND: 422,
   DECOMPILE_FAILED: 502,
   RPC_ERROR: 502,

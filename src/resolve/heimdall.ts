@@ -9,13 +9,22 @@ import type { Abi, Address } from "viem";
 import { ApiError } from "../errors.js";
 import { config } from "../config.js";
 import { fetchWithTimeout } from "../util.js";
+import { UpstreamConcurrency } from "../upstreamConcurrency.js";
 
 export interface HeimdallHit {
   abi: Abi;
   cached: boolean;
 }
 
+const heimdallConcurrency = new UpstreamConcurrency(config.heimdallConcurrency);
+
 export async function fromHeimdall(address: Address, rpcUrl: string): Promise<HeimdallHit | null> {
+  return heimdallConcurrency.run("gulltoppr", config.heimdallQueueTimeoutMs, () =>
+    fromHeimdallUnbounded(address, rpcUrl),
+  );
+}
+
+async function fromHeimdallUnbounded(address: Address, rpcUrl: string): Promise<HeimdallHit | null> {
   const url = `${config.heimdallApiUrl}/v1/${address}?rpc_url=${encodeURIComponent(rpcUrl)}`;
 
   const res = await fetchWithTimeout(url, config.heimdallTimeoutMs, "gulltoppr");
@@ -33,6 +42,15 @@ export async function fromHeimdall(address: Address, rpcUrl: string): Promise<He
 
 /** decode_tx path (SPEC §8): gulltoppr GET /v1/decode/{tx_hash}?rpc_url= */
 export async function decodeTxViaHeimdall(
+  txHash: string,
+  rpcUrl: string,
+): Promise<{ source: string; cached: boolean; decoded: unknown }> {
+  return heimdallConcurrency.run("gulltoppr decode", config.heimdallQueueTimeoutMs, () =>
+    decodeTxViaHeimdallUnbounded(txHash, rpcUrl),
+  );
+}
+
+async function decodeTxViaHeimdallUnbounded(
   txHash: string,
   rpcUrl: string,
 ): Promise<{ source: string; cached: boolean; decoded: unknown }> {

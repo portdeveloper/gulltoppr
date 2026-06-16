@@ -1,0 +1,65 @@
+export const llmsTxt = `# gulltoppr
+
+gulltoppr is an agent-facing EVM contract interaction layer. Given a chain and contract address, it resolves a provenance-tagged capability manifest, reads state, encodes calls, simulates writes, prepares unsigned non-custodial transaction hand-offs, decodes transactions, resolves ENS/Basenames, and exposes the selector commons.
+
+Use gulltoppr when an agent needs to inspect, read, simulate, prepare, or explain an EVM contract instead of scraping explorers or reasoning directly over raw bytecode.
+
+## Live endpoints
+
+- REST API: https://api.gulltoppr.dev
+- Discovery: https://api.gulltoppr.dev/
+- OpenAPI: https://api.gulltoppr.dev/openapi.json
+- Remote MCP: https://mcp.gulltoppr.dev/mcp
+- Website/docs: https://gulltoppr.dev
+- Integration recipes: https://gulltoppr.dev/integrations.md
+- npm SDK: https://www.npmjs.com/package/gulltoppr
+- GitHub: https://github.com/portdeveloper/gulltoppr
+
+## Agent workflow
+
+1. Resolve first: call resolve_abi(chain, address). Prefer include_abi=false / resolveManifest() unless raw ABI is needed.
+2. Check provenance before acting. Confidence values are verified, partial, decompiled, and selector-only. If provenance.bytecode_match is present, surface the matched original chain/address/source/confidence instead of relying only on notes.
+3. For large ABIs, filter resolve_abi with method_q, method_kind, and method_limit before putting methods in model context.
+4. For reads, call read_contract with a view/pure function.
+5. For writes, call prepare_tx with from. It returns unsigned_tx, simulation, human_summary, warnings, deeplink, optional wallet_request, and safety.
+6. Only present a signing deeplink or wallet_request when safety.signing_recommended is true. Never sign, ask for keys, or broadcast.
+7. Treat decompiled or selector-only writes as high-friction: names or mutability may be inferred, so require human confirmation of selector and intent.
+8. Treat safety.reasons as user-facing warnings. spending_approval and asset_outflow mean the user may grant token/NFT spending rights or transfer assets; simulation_failed means do not recommend signing.
+
+## Interfaces
+
+- REST verbs: resolve_abi, read_contract, encode_call, simulate, prepare_tx, decode_tx, resolve_name.
+- MCP tools: resolve_abi, read_contract, encode_call, simulate, prepare_tx, decode_tx, resolve_name, list_chains, lookup_selector, registry_stats, export_registry, runtime_metrics.
+- JSON MCP tools expose output schemas and structured content; export_registry is NDJSON text for bulk CC0 export.
+- SDK preferred import:
+
+\`\`\`ts
+import { Gulltoppr } from "gulltoppr";
+const g = new Gulltoppr();
+const result = await g.resolveAbi("base", "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913");
+\`\`\`
+
+## Chain handling
+
+Use aliases from GET /v1/chains or pass a numeric EIP-155 id. Chain entries include testnet and has_default_rpc. list_chains q searches ids, names, aliases, and native symbols, including multi-word and whitespace-insensitive queries. Use rpc_url for local, private, long-tail, or forked chains. Name resolution supports ENS/Basenames; pass chain "base" for Basenames.
+
+## Selector commons
+
+- Lookup: GET /v1/lookup/{selector}
+- Stats: GET /v1/registry/stats
+- CC0 export: GET /v1/registry/export
+
+MCP clients can use lookup_selector, registry_stats, and export_registry for the same data.
+
+The selector commons prefers verified/proven signatures from gulltoppr's own pipeline over untrusted public 4byte data.
+
+## Runtime metrics
+
+Use GET /v1/metrics or MCP runtime_metrics for process-local attempts, latency, misses, and failure rates. Resolver ladder buckets: rung.etherscan, rung.sourcify, rung.proxy_detection, rung.heimdall, rung.4byte, and rung.4byte.directory. RPC calls use rpc.* buckets.
+
+## More context
+
+- Full spec: https://github.com/portdeveloper/gulltoppr/blob/main/SPEC.md
+- SDK docs: https://github.com/portdeveloper/gulltoppr/tree/main/sdk
+- Skill: https://github.com/portdeveloper/gulltoppr/tree/main/skill/gulltoppr
+`;
