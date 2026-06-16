@@ -20,7 +20,7 @@
     "docker:build": "docker build -t gulltoppr-engine:ci .",
     "docker:build:mcp": "docker build -f Dockerfile.mcp -t gulltoppr-mcp:ci .",
     "docker:smoke": "node scripts/docker-smoke.mjs",
-    "verify": "npm run typecheck && npm test && npm run audit && npm run build:sdk && npm run test:sdk:dist && npm run test:sdk && npm run audit:sdk"
+    "verify": "node scripts/verify.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",
