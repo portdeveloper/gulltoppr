@@ -38,12 +38,12 @@
       .commandbar { border: 1px solid var(--line); border-radius: 8px; background: #0d0f0e; overflow: hidden; }
       .prompt { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--dim); font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
       .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--acc); box-shadow: 14px 0 0 var(--warn), 28px 0 0 var(--bad); margin-right: 30px; }
-      .row { display: grid; grid-template-columns: minmax(170px, 260px) minmax(0, 1fr) auto; gap: 10px; padding: 12px; align-items: stretch; }
+      .row { display: grid; grid-template-columns: minmax(145px, 210px) minmax(0, 1fr) minmax(180px, 260px) auto; gap: 10px; padding: 12px; align-items: stretch; }
       .field { min-width: 0; position: relative; }
       .field::before { content: attr(data-label); position: absolute; top: 7px; left: 12px; color: var(--dim); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; pointer-events: none; }
       input { width: 100%; height: 58px; background: var(--panel2); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 25px 12px 8px; font: inherit; outline: none; }
       input:focus { border-color: #3c7a54; box-shadow: 0 0 0 3px rgba(89,217,142,.12); }
-      input.addr, input.chain { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      input.addr, input.chain, input.rpc { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
       input.chain { font-family: inherit; font-weight: 700; }
       button.go { background: var(--acc); color: #062018; border: none; border-radius: 8px; padding: 0 24px; min-width: 118px; font-weight: 800; cursor: pointer; }
       button.go:disabled { opacity: .6; cursor: default; }
@@ -59,12 +59,28 @@
       .result-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
       .result-meta { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dim); }
       .result-meta code { color: var(--ink); }
+      .inspect { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+      details { min-width: 0; border: 1px solid var(--line); border-radius: 8px; background: #0d0f0e; }
+      summary { cursor: pointer; padding: 8px 10px; color: var(--ink); font-size: 13px; font-weight: 700; }
+      .detail-body { border-top: 1px solid var(--line); padding: 8px 10px; color: var(--dim); font-size: 12.5px; overflow-wrap: anywhere; }
+      .detail-body code { color: var(--ink); }
+      .warn-text { color: var(--warn); }
+      .method-tools { margin-top: 14px; display: flex; gap: 10px; align-items: center; }
+      .method-tools .field { flex: 1; }
+      .method-tools input { height: 46px; padding-top: 21px; }
       .fns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-top: 14px; }
       .fn-col { min-width: 0; border: 1px solid var(--line); border-radius: 8px; background: #0d0f0e; overflow: hidden; }
       .fn-col h3 { margin: 0; padding: 8px 10px; border-bottom: 1px solid var(--line); color: var(--ink); font-size: 13px; }
       .fn-list { margin: 0; padding: 0; list-style: none; max-height: 288px; overflow-y: auto; overflow-x: hidden; }
-      .fn-list li { min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; color: var(--ink); padding: 6px 10px; border-bottom: 1px solid rgba(42,50,45,.75); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .fn-list li { min-width: 0; padding: 7px 10px; border-bottom: 1px solid rgba(42,50,45,.75); }
       .fn-list li:nth-child(even) { background: rgba(255,255,255,.015); }
+      .fn-line { min-width: 0; display: flex; align-items: center; gap: 8px; }
+      .fn-signature { min-width: 0; flex: 1; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .fn-badges { display: inline-flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+      .mini { display: inline-block; border: 1px solid var(--line); border-radius: 999px; padding: 1px 6px; color: var(--dim); font: 10px/1.5 ui-sans-serif, system-ui, sans-serif; }
+      .mini.payable { color: var(--warn); border-color: #5b4a1d; background: #241d0b; }
+      .mini.inferred { color: var(--bad); border-color: #66362f; background: #271412; }
+      .fn-hint { margin-top: 3px; color: var(--dim); font-size: 11.5px; overflow-wrap: anywhere; }
       .err { color: var(--bad); font-family: ui-monospace, monospace; font-size: 13px; }
       pre { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; overflow: auto; font-size: 13px; }
       .grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
@@ -73,7 +89,10 @@
       @media (max-width: 760px) {
         .row { grid-template-columns: 1fr; }
         button.go { height: 48px; }
-        .fns, .grid2 { grid-template-columns: 1fr; }
+        .fns, .grid2, .inspect { grid-template-columns: 1fr; }
+        .fn-line { align-items: flex-start; flex-direction: column; gap: 4px; }
+        .fn-signature { white-space: normal; overflow-wrap: anywhere; }
+        .fn-badges { justify-content: flex-start; }
         pre { white-space: pre-wrap; overflow-wrap: anywhere; }
       }
     </style>
@@ -92,6 +111,7 @@
           <a class="btn primary" href="https://github.com/portdeveloper/gulltoppr">GitHub</a>
           <a class="btn" href="https://www.npmjs.com/package/gulltoppr">npm</a>
           <a class="btn" href="https://mcp.gulltoppr.dev/mcp">MCP endpoint</a>
+          <a class="btn" href="integrations.md">Integration recipes</a>
         </div>
       </header>
 
@@ -125,6 +145,9 @@
               <div class="field" data-label="contract">
                 <input class="addr" id="addr" placeholder="0x…" spellcheck="false" />
               </div>
+              <div class="field" data-label="rpc url">
+                <input class="rpc" id="rpc-url" placeholder="https://…" spellcheck="false" />
+              </div>
               <button class="go" id="go">Resolve</button>
             </div>
           </div>
@@ -138,24 +161,27 @@
       <section>
         <h2>Use it from an agent (MCP)</h2>
         <pre>{ "mcpServers": { "gulltoppr": { "url": "https://mcp.gulltoppr.dev/mcp" } } }</pre>
+        <p class="meta">Wallet, explorer, and coding-agent recipes live in
+          <a href="integrations.md">the integration guide</a>.</p>
         <div class="grid2">
           <div>
             <h2>…or from code (SDK)</h2>
             <pre>npm i gulltoppr
 
-import { AbiNinja } from "gulltoppr";
-const g = new AbiNinja();
+import { Gulltoppr } from "gulltoppr";
+const g = new Gulltoppr();
 
 const r = await g.resolveAbi("base", "0x833…2913");
 // r.interface.reads / .writes, r.provenance, r.proxy
 
 const tx = await g.prepareTx("base", addr, "transfer",
   [to, "1000000"], { from: myWallet });
-// → unsigned tx + simulation + warnings (never signs)</pre>
+// → unsigned tx + wallet request + simulation
+//   + warnings (never signs)</pre>
           </div>
           <div>
             <h2>…or plain REST</h2>
-            <pre>curl https://api.gulltoppr.dev/v1/base/0x833…2913/abi
+            <pre>curl 'https://api.gulltoppr.dev/v1/base/0x833…2913/abi?include_abi=false'
 
 # verbs: resolve_abi · read_contract · encode_call
 #        simulate · prepare_tx · decode_tx · resolve_name</pre>
@@ -171,6 +197,7 @@ const tx = await g.prepareTx("base", addr, "transfer",
         <a href="https://github.com/portdeveloper/gulltoppr">repo</a> ·
         <a href="https://www.npmjs.com/package/gulltoppr">npm</a> ·
         <a href="https://api.gulltoppr.dev/">engine</a> ·
+        <a href="integrations.md">integrations</a> ·
         <a href="https://github.com/portdeveloper/heimdall-api">heimdall-api</a> ·
         <a href="https://github.com/portdeveloper/evm-abi-commons">evm-abi-commons (CC0)</a>
         <br />rides <a href="https://github.com/Jon-Becker/heimdall-rs">heimdall-rs</a> to reach any contract.
@@ -195,6 +222,7 @@ const tx = await g.prepareTx("base", addr, "transfer",
         { label: "USDC (base)", chain: "base", addr: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" },
         { label: "WETH (ethereum)", chain: "ethereum", addr: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2" },
         { label: "AUSD (monad)", chain: "monad", addr: "0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a" },
+        { label: "WETH (monad testnet)", chain: "monad-testnet", addr: "0x45477f4709771331db81944A5E20eF95Bc7BA2D7" },
       ];
       const chips = $("chips");
       examples.forEach((e) => {
@@ -207,7 +235,7 @@ const tx = await g.prepareTx("base", addr, "transfer",
 
       async function loadChains() {
         try {
-          const res = await fetch(`${API}/v1/chains?testnets=false&has_default_rpc=true`);
+          const res = await fetch(`${API}/v1/chains?has_default_rpc=true`);
           if (!res.ok) return;
           const body = await res.json();
           const options = $("chain-options");
@@ -217,7 +245,7 @@ const tx = await g.prepareTx("base", addr, "transfer",
             if (!chain.default_rpc_url && alias !== "local") return;
             const option = document.createElement("option");
             option.value = alias;
-            option.label = `${chain.name} (${chain.id})`;
+            option.label = `${chain.name} (${chain.id}${chain.testnet ? ", testnet" : ""})`;
             options.appendChild(option);
           });
           $("chain").value = "ethereum";
@@ -228,32 +256,173 @@ const tx = await g.prepareTx("base", addr, "transfer",
 
       function esc(s) { return String(s).replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m])); }
       function attr(s) { return esc(s).replace(/"/g, "&quot;"); }
-      function list(items) {
+      function methodBadges(f, kind) {
+        const badges = [];
+        if (kind === "write" && f.payable) badges.push(`<span class="mini payable">payable</span>`);
+        if (f.names_synthetic) badges.push(`<span class="mini inferred">inferred</span>`);
+        if (f.inputs?.length) badges.push(`<span class="mini">${esc(String(f.inputs.length))} in</span>`);
+        if (kind === "read" && f.outputs?.length) badges.push(`<span class="mini">${esc(String(f.outputs.length))} out</span>`);
+        return badges.length ? `<span class="fn-badges">${badges.join("")}</span>` : "";
+      }
+      function methodRow(f, kind) {
+        const hint = f.hint ? `<div class="fn-hint">${esc(f.hint)}</div>` : "";
+        return `<li title="${attr(f.signature)}"><div class="fn-line"><span class="fn-signature">${esc(f.signature)}</span>${methodBadges(f, kind)}</div>${hint}</li>`;
+      }
+      function list(items, kind) {
         return "<ul class='fn-list'>" + (items.length
-          ? items.map((f) => `<li title="${attr(f.signature)}">${esc(f.signature)}</li>`).join("")
+          ? items.map((f) => methodRow(f, kind)).join("")
           : "<li class='meta'>none</li>") + "</ul>";
+      }
+      function matchesMethod(f, query) {
+        if (!query) return true;
+        const haystack = [
+          f.function,
+          f.signature,
+          f.hint,
+          ...(f.inputs || []).flatMap((p) => [p.name, p.type]),
+          ...(f.outputs || []).flatMap((p) => [p.name, p.type]),
+        ].join(" ").toLowerCase();
+        if (haystack.includes(query)) return true;
+        if (haystack.replace(/\s+/g, "").includes(query.replace(/\s+/g, ""))) return true;
+        return query.split(/\s+/).every((token) => haystack.includes(token));
+      }
+      function renderFns(data, query = "", serverFiltered = false) {
+        const q = query.trim().toLowerCase();
+        const reads = serverFiltered ? data.interface.reads : data.interface.reads.filter((f) => matchesMethod(f, q));
+        const writes = serverFiltered ? data.interface.writes : data.interface.writes.filter((f) => matchesMethod(f, q));
+        const readCount = serverFiltered ? reads.length : `${reads.length}/${data.interface.reads.length}`;
+        const writeCount = serverFiltered ? writes.length : `${writes.length}/${data.interface.writes.length}`;
+        $("fn-grid").innerHTML =
+          `<div class="fn-col"><h3>Read (${readCount})</h3>${list(reads, "read")}</div>` +
+          `<div class="fn-col"><h3>Write (${writeCount})</h3>${list(writes, "write")}</div>`;
+      }
+      function detailsBlock(title, body, open = false) {
+        return `<details${open ? " open" : ""}><summary>${esc(title)}</summary><div class="detail-body">${body}</div></details>`;
+      }
+      function resolveWarnings(data) {
+        const p = data.provenance;
+        const warnings = [];
+        if (p.names_synthetic) {
+          warnings.push(`Decompiled or selector-only ABI: names and mutability can be inferred. ${p.notes || ""}`.trim());
+        }
+        if (p.confidence === "partial") {
+          warnings.push("Partial source/proxy match: ABI is useful, but provenance is not full verified-source ground truth for this exact address.");
+        }
+        if (p.bytecode_match) {
+          warnings.push(`Bytecode match: ABI reused from ${p.bytecode_match.address} on chain ${p.bytecode_match.chain} (${p.bytecode_match.source}/${p.bytecode_match.confidence}).`);
+        }
+        if (data.proxy) {
+          warnings.push(
+            data.proxy.pattern === "diamond"
+              ? `Diamond proxy: ABI is merged from ${data.proxy.hops.filter((h) => h.role === "facet").length} facet(s).`
+              : `${data.proxy.pattern} proxy: ABI resolves against ${data.abi_for}.`,
+          );
+        }
+        if (data.abi_omitted) {
+          warnings.push("Raw JSON ABI omitted for compact agent context; use include_abi=true only when a tool needs the full ABI.");
+        }
+        return warnings;
+      }
+      function renderInspect(data) {
+        const p = data.provenance;
+        const provenance = [
+          `<div><b>source</b> <code>${esc(p.source)}</code></div>`,
+          `<div><b>confidence</b> <code>${esc(p.confidence)}</code></div>`,
+          `<div><b>verified</b> <code>${esc(p.verified)}</code></div>`,
+          `<div><b>synthetic names</b> <code>${esc(p.names_synthetic)}</code></div>`,
+          `<div><b>abi for</b> <code>${esc(data.abi_for)}</code></div>`,
+          `<div><b>raw ABI</b> <code>${data.abi_omitted ? "omitted" : "included"}</code></div>`,
+          p.bytecode_match
+            ? `<div><b>bytecode match</b> <code>${esc(p.bytecode_match.address)}</code> chain <code>${esc(p.bytecode_match.chain)}</code> <code>${esc(p.bytecode_match.source)}/${esc(p.bytecode_match.confidence)}</code></div>`
+            : "",
+          p.notes ? `<div>${esc(p.notes)}</div>` : "",
+        ].filter(Boolean).join("");
+        const proxy = data.proxy
+          ? data.proxy.hops.map((h) => `<div><code>${esc(h.role)}</code> ${esc(h.address)}</div>`).join("") +
+            `<div><b>pattern</b> <code>${esc(data.proxy.pattern)}</code></div>` +
+            (data.proxy.resolved_implementation ? `<div><b>implementation</b> <code>${esc(data.proxy.resolved_implementation)}</code></div>` : "")
+          : "<div>none detected</div>";
+        const token = data.token
+          ? Object.entries(data.token).map(([k, v]) => `<div><b>${esc(k)}</b> <code>${esc(v)}</code></div>`).join("")
+          : "<div>none detected</div>";
+        const warningItems = resolveWarnings(data);
+        const warnings = warningItems.length
+          ? warningItems.map((warning) => `<div class="warn-text">${esc(warning)}</div>`).join("")
+          : "<div>none</div>";
+        return `<div class="inspect">` +
+          detailsBlock("Provenance", provenance, p.names_synthetic) +
+          detailsBlock("Proxy", proxy, Boolean(data.proxy)) +
+          detailsBlock("Token", token, Boolean(data.token)) +
+          detailsBlock(`Warnings (${warningItems.length})`, warnings, warningItems.length > 0) +
+          `</div>`;
+      }
+      function abiUrl(chain, addr, rpcUrl, opts = {}) {
+        const params = new URLSearchParams({ include_abi: "false" });
+        if (opts.method_q) {
+          params.set("method_q", opts.method_q);
+          params.set("method_kind", opts.method_kind || "all");
+          params.set("method_limit", String(opts.method_limit || 120));
+        }
+        if (rpcUrl) params.set("rpc_url", rpcUrl);
+        return `${API}/v1/${encodeURIComponent(chain)}/${addr}/abi?${params}`;
       }
 
       async function resolve() {
         const chain = $("chain").value;
         const addr = $("addr").value.trim();
+        const rpcUrl = $("rpc-url").value.trim();
         const out = $("out");
         if (!/^0x[0-9a-fA-F]{40}$/.test(addr)) { out.innerHTML = "<p class='err'>Enter a valid 0x address.</p>"; return; }
+        if (rpcUrl && !/^https?:\/\/\S+$/.test(rpcUrl)) { out.innerHTML = "<p class='err'>RPC URL must be http(s) without spaces.</p>"; return; }
         $("go").disabled = true;
         out.innerHTML = "<p class='meta'>Resolving… (first call may take a few seconds while the engine wakes)</p>";
         try {
-          const res = await fetch(`${API}/v1/${encodeURIComponent(chain)}/${addr}/abi`);
+          const res = await fetch(abiUrl(chain, addr, rpcUrl));
           const data = await res.json();
           if (!res.ok) { out.innerHTML = `<p class='err'>${esc(data.error?.code || res.status)}: ${esc(data.error?.message || "error")}</p>`; return; }
           const p = data.provenance;
           const badge = `<span class="badge b-${p.confidence}">${p.confidence.toUpperCase()}</span>`;
           const tok = data.token?.symbol ? ` · token <b>${esc(data.token.symbol)}</b>` : "";
-          const proxy = data.proxy ? ` · ${esc(data.proxy.pattern)} proxy → impl <code>${esc(data.abi_for.slice(0, 10))}…</code>` : "";
+          const proxyTitle = data.proxy
+            ? data.proxy.pattern === "diamond"
+              ? ` · diamond proxy → ${data.proxy.hops.filter((h) => h.role === "facet").length} facets`
+              : ` · ${data.proxy.pattern} proxy → impl ${data.abi_for}`
+            : "";
+          const proxy = data.proxy
+            ? data.proxy.pattern === "diamond"
+              ? ` · diamond proxy → <code>${esc(String(data.proxy.hops.filter((h) => h.role === "facet").length))}</code> facets`
+              : ` · ${esc(data.proxy.pattern)} proxy → impl <code>${esc(data.abi_for.slice(0, 10))}…</code>`
+            : "";
           out.innerHTML =
-            `<div class="result-head">${badge}<span class="result-meta" title="${attr(`source: ${p.source}${data.token?.symbol ? ` · token ${data.token.symbol}` : ""}${data.proxy ? ` · ${data.proxy.pattern} proxy → impl ${data.abi_for}` : ""}${data.cached ? " · cached" : ""}`)}">source: ${esc(p.source)}${tok}${proxy}${data.cached ? " · cached" : ""}</span></div>` +
+            `<div class="result-head">${badge}<span class="result-meta" title="${attr(`source: ${p.source}${data.token?.symbol ? ` · token ${data.token.symbol}` : ""}${proxyTitle}${data.cached ? " · cached" : ""}`)}">source: ${esc(p.source)}${tok}${proxy}${data.cached ? " · cached" : ""}</span></div>` +
             (p.names_synthetic ? `<p class="meta" style="color:var(--warn)">⚠ Decompiled: function/param names are inferred. ${esc(p.notes || "")}</p>` : "") +
-            `<div class="fns"><div class="fn-col"><h3>Read (${data.interface.reads.length})</h3>${list(data.interface.reads)}</div>` +
-            `<div class="fn-col"><h3>Write (${data.interface.writes.length})</h3>${list(data.interface.writes)}</div></div>`;
+            renderInspect(data) +
+            `<div class="method-tools"><div class="field" data-label="method filter"><input id="method-filter" placeholder="balance, transfer, owner, uint256…" autocomplete="off" spellcheck="false" /></div></div>` +
+            `<div class="fns" id="fn-grid"></div>`;
+          renderFns(data);
+          let filterTimer = 0;
+          let filterRequest = 0;
+          $("method-filter").addEventListener("input", (e) => {
+            const query = e.target.value;
+            renderFns(data, query);
+            clearTimeout(filterTimer);
+            if (!query.trim()) return;
+            const requestId = ++filterRequest;
+            filterTimer = setTimeout(async () => {
+              try {
+                const filteredRes = await fetch(abiUrl(chain, addr, rpcUrl, {
+                  method_q: query.trim(),
+                  method_kind: "all",
+                  method_limit: 120,
+                }));
+                const filtered = await filteredRes.json();
+                if (requestId !== filterRequest || !filteredRes.ok || $("method-filter").value.trim() !== query.trim()) return;
+                renderFns(filtered, query, true);
+              } catch {
+                // Local filtering above keeps the demo useful if the narrowed request fails.
+              }
+            }, 250);
+          });
         } catch (e) {
           out.innerHTML = `<p class='err'>${esc(e.message)}</p>`;
         } finally {

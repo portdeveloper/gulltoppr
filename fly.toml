@@ -1,4 +1,4 @@
-# Fly config for the abi.ninja engine. Co-located in cdg with gulltoppr
+# Fly config for the gulltoppr engine. Co-located in cdg with heimdall-api
 # (heimdall-api) to minimize ladder rung-4 latency.
 app = "gulltoppr"
 primary_region = "cdg"

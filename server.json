@@ -2,12 +2,20 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.portdeveloper/gulltoppr",
   "title": "🐴 Gulltoppr",
-  "description": "Resolve any EVM contract ABI (even unverified, via decompilation), read, simulate, prepare txs.",
+  "description": "Resolve EVM ABIs, read, simulate, prepare unsigned tx hand-offs, and decode txs with provenance.",
+  "websiteUrl": "https://gulltoppr.dev",
+  "icons": [
+    {
+      "src": "https://gulltoppr.dev/logo-400.png",
+      "mimeType": "image/png",
+      "sizes": ["400x400"]
+    }
+  ],
   "repository": {
     "url": "https://github.com/portdeveloper/gulltoppr",
     "source": "github"
   },
-  "version": "0.1.2",
+  "version": "0.2.2",
   "remotes": [
     {
       "type": "streamable-http",
