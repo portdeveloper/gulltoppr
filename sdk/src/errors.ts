@@ -3,20 +3,23 @@
  * stable machine `code` so callers can branch on it (e.g. retry on RPC_ERROR,
  * surface AMBIGUOUS_FUNCTION candidates).
  */
-export type ErrorCode =
-  | "INVALID_ADDRESS"
-  | "INVALID_ARGS"
-  | "UNKNOWN_CHAIN"
-  | "AMBIGUOUS_FUNCTION"
-  | "FUNCTION_NOT_FOUND"
-  | "NOT_A_VIEW_FN"
-  | "ABI_NOT_FOUND"
-  | "DECOMPILE_FAILED"
-  | "RPC_ERROR"
-  | "UPSTREAM_TIMEOUT"
-  | "RATE_LIMITED"
-  | "INTERNAL"
-  | "NETWORK";
+export const ENGINE_ERROR_CODES = [
+  "INVALID_ADDRESS",
+  "INVALID_ARGS",
+  "UNKNOWN_CHAIN",
+  "AMBIGUOUS_FUNCTION",
+  "FUNCTION_NOT_FOUND",
+  "NOT_A_VIEW_FN",
+  "NOT_A_WRITE_FN",
+  "ABI_NOT_FOUND",
+  "DECOMPILE_FAILED",
+  "RPC_ERROR",
+  "UPSTREAM_TIMEOUT",
+  "RATE_LIMITED",
+] as const;
+
+export type EngineErrorCode = (typeof ENGINE_ERROR_CODES)[number];
+export type ErrorCode = EngineErrorCode | "INTERNAL" | "NETWORK";
 
 export class AbiNinjaError extends Error {
   readonly code: ErrorCode;
