@@ -35,5 +35,8 @@
     "@types/node": "^22.10.2",
     "typescript": "^5.7.2",
     "vitest": "^4.1.9"
+  },
+  "overrides": {
+    "ws": "^8.21.0"
   }
 }
