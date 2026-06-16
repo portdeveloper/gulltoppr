@@ -1,0 +1,44 @@
+name: Live contract tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      live_engine_base_url:
+        description: "Optional deployed engine base URL to smoke instead of the checked-out server"
+        required: false
+        type: string
+  schedule:
+    - cron: "17 6 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-contract-tests
+  cancel-in-progress: false
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            sdk/package-lock.json
+      - run: npm ci
+      - run: npm ci
+        working-directory: sdk
+      - run: npm run verify
+      - run: npm run test:live
+        env:
+          LIVE_ENGINE_BASE_URL: ${{ inputs.live_engine_base_url }}
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+          HEIMDALL_API_URL: ${{ vars.HEIMDALL_API_URL }}
+          SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL }}
+          BNB_RPC_URL: ${{ secrets.BNB_RPC_URL }}
+          VICTION_RPC_URL: ${{ secrets.VICTION_RPC_URL }}
