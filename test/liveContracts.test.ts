@@ -56,24 +56,40 @@ function transientUpstreamReason(status: number, body: any): string | null {
   return null;
 }
 
-function assertOk(res: Response, body: any): void {
-  const transient = transientUpstreamReason(res.status, body);
-  if (transient) throw new TransientUpstreamError(transient);
-  expect(res.status, JSON.stringify(body)).toBe(200);
+const LIVE_MAX_ATTEMPTS = 3;
+const LIVE_RETRY_BASE_MS = 1000;
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// All live endpoints here are read-only (resolve/read/simulate/prepare/decode),
+// so retrying is safe. A momentary public-RPC 429/timeout usually clears within a
+// second or two, so we retry with linear backoff before giving up; only after
+// LIVE_MAX_ATTEMPTS do we throw TransientUpstreamError, which liveTest() turns
+// into a skip. This converts most blips into real passes rather than skips.
+async function fetchOk(path: string, init?: RequestInit): Promise<{ res: Response; body: any }> {
+  let lastTransient: TransientUpstreamError | undefined;
+  for (let attempt = 1; attempt <= LIVE_MAX_ATTEMPTS; attempt++) {
+    const res = await request(path, init);
+    const body = await res.json();
+    const transient = transientUpstreamReason(res.status, body);
+    if (!transient) {
+      expect(res.status, JSON.stringify(body)).toBe(200);
+      return { res, body };
+    }
+    lastTransient = new TransientUpstreamError(transient);
+    if (attempt < LIVE_MAX_ATTEMPTS) {
+      console.warn(`[live] transient upstream on ${path} (attempt ${attempt}/${LIVE_MAX_ATTEMPTS}): ${transient} — retrying`);
+      await sleep(LIVE_RETRY_BASE_MS * attempt);
+    }
+  }
+  throw lastTransient!;
 }
 
 async function json(path: string, init?: RequestInit): Promise<any> {
-  const res = await request(path, init);
-  const body = await res.json();
-  assertOk(res, body);
-  return body;
+  return (await fetchOk(path, init)).body;
 }
 
 async function responseJson(path: string, init?: RequestInit): Promise<{ res: Response; body: any }> {
-  const res = await request(path, init);
-  const body = await res.json();
-  assertOk(res, body);
-  return { res, body };
+  return fetchOk(path, init);
 }
 
 // Wraps `it` so a transient upstream failure raised by any helper marks the test
