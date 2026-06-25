@@ -1,13 +1,24 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, type TestContext } from "vitest";
 import { app } from "../src/server.js";
 
 const RUN_LIVE = process.env.RUN_LIVE_CONTRACT_TESTS === "1";
 const describeLive = RUN_LIVE ? describe : describe.skip;
 
-const ENGINE_BASE_URL = process.env.LIVE_ENGINE_BASE_URL?.replace(/\/$/, "");
-const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL ?? "https://ethereum-sepolia-rpc.publicnode.com";
-const BNB_RPC_URL = process.env.BNB_RPC_URL ?? "https://bsc-rpc.publicnode.com";
-const VICTION_RPC_URL = process.env.VICTION_RPC_URL ?? "https://rpc.viction.xyz";
+// CI passes RPC endpoints via GitHub secrets. An *unset* secret expands to an
+// empty string, not undefined, so `?? fallback` would keep the blank value: the
+// request then sends `rpc_url=` (empty), the server drops it (`"" || undefined`),
+// and the chain falls back to viem's default public RPC (e.g.
+// https://56.rpc.thirdweb.com) — which strictly rate-limits and flakes the suite.
+// Treat blank/whitespace env values as absent so the reliable fallback is used.
+function envOr(name: string, fallback: string): string {
+  const value = process.env[name]?.trim();
+  return value ? value : fallback;
+}
+
+const ENGINE_BASE_URL = envOr("LIVE_ENGINE_BASE_URL", "").replace(/\/$/, "") || undefined;
+const SEPOLIA_RPC_URL = envOr("SEPOLIA_RPC_URL", "https://ethereum-sepolia-rpc.publicnode.com");
+const BNB_RPC_URL = envOr("BNB_RPC_URL", "https://bsc-rpc.publicnode.com");
+const VICTION_RPC_URL = envOr("VICTION_RPC_URL", "https://rpc.viction.xyz");
 
 const DAI = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
 const DAI_TRANSFER_TX_HASH = "0x8650ad046ce0329a778bf8844cd4b1822a7743fc69a2777520f96599cea7c571";
@@ -27,18 +38,73 @@ async function request(path: string, init?: RequestInit): Promise<Response> {
   return app.request(path, init);
 }
 
+// Upstream/transient failure codes (SPEC §7). The public RPCs these live tests
+// hit will intermittently rate-limit (429 → RPC_ERROR), time out, or be briefly
+// unavailable — infrastructure flakes, not regressions in this service — so we
+// skip on them rather than fail. DECOMPILE_FAILED / ABI_NOT_FOUND are NOT in this
+// set: those carry 5xx/4xx too but signal a real regression we want to catch.
+const TRANSIENT_UPSTREAM_CODES = new Set(["RPC_ERROR", "UPSTREAM_TIMEOUT", "RATE_LIMITED"]);
+
+class TransientUpstreamError extends Error {}
+
+function transientUpstreamReason(status: number, body: any): string | null {
+  if (status === 200) return null;
+  const code = body?.error?.code;
+  if (typeof code === "string" && TRANSIENT_UPSTREAM_CODES.has(code)) {
+    return `${status} ${code}: ${body?.error?.message ?? ""}`.trim();
+  }
+  return null;
+}
+
+function assertOk(res: Response, body: any): void {
+  const transient = transientUpstreamReason(res.status, body);
+  if (transient) throw new TransientUpstreamError(transient);
+  expect(res.status, JSON.stringify(body)).toBe(200);
+}
+
 async function json(path: string, init?: RequestInit): Promise<any> {
   const res = await request(path, init);
   const body = await res.json();
-  expect(res.status, JSON.stringify(body)).toBe(200);
+  assertOk(res, body);
   return body;
 }
 
 async function responseJson(path: string, init?: RequestInit): Promise<{ res: Response; body: any }> {
   const res = await request(path, init);
   const body = await res.json();
-  expect(res.status, JSON.stringify(body)).toBe(200);
+  assertOk(res, body);
   return { res, body };
+}
+
+// Wraps `it` so a transient upstream failure raised by any helper marks the test
+// skipped (and visible in the report) instead of failing the run. ctx.skip()
+// throws, so the sentinel is captured first and skip() is called outside the
+// try/catch — otherwise the catch would swallow the skip signal.
+function liveTest(
+  name: string,
+  fn: (ctx: TestContext) => Promise<void>,
+  timeout?: number,
+): void {
+  it(
+    name,
+    async (ctx) => {
+      let transient: TransientUpstreamError | undefined;
+      try {
+        await fn(ctx);
+      } catch (err) {
+        if (err instanceof TransientUpstreamError) {
+          transient = err;
+        } else {
+          throw err;
+        }
+      }
+      if (transient) {
+        console.warn(`[live] skipping "${name}": ${transient.message}`);
+        ctx.skip(`transient upstream failure: ${transient.message}`);
+      }
+    },
+    timeout,
+  );
 }
 
 function rpcParam(url: string): string {
@@ -82,7 +148,7 @@ function expectMetricBucket(metrics: any, name: string): void {
 }
 
 describeLive("live contract interactions", () => {
-  it(
+  liveTest(
     "lists chain aliases with testnet/default-RPC metadata",
     async () => {
       const catalog = await json("/v1/chains?q=monad");
@@ -107,7 +173,7 @@ describeLive("live contract interactions", () => {
     60_000,
   );
 
-  it(
+  liveTest(
     "loads DAI on mainnet and reads balanceOf",
     async () => {
       const { res, body: resolved } = await responseJson(`/v1/ethereum/${DAI}/abi`);
@@ -123,7 +189,7 @@ describeLive("live contract interactions", () => {
     60_000,
   );
 
-  it(
+  liveTest(
     "loads a compact DAI manifest without raw ABI for token-efficient agent context",
     async () => {
       const resolved = await json(`/v1/ethereum/${DAI}/abi?include_abi=false`);
@@ -137,7 +203,7 @@ describeLive("live contract interactions", () => {
     60_000,
   );
 
-  it(
+  liveTest(
     "filters a live compact DAI manifest by write method intent",
     async () => {
       const resolved = await json(`/v1/ethereum/${DAI}/abi?include_abi=false&method_q=approve&method_kind=write&method_limit=1`);
@@ -158,7 +224,7 @@ describeLive("live contract interactions", () => {
     60_000,
   );
 
-  it(
+  liveTest(
     "prepares a DAI write with simulation, unsigned tx, wallet hand-off, summary, and warnings",
     async () => {
       const spender = "0x0000000000000000000000000000000000000001";
@@ -197,7 +263,7 @@ describeLive("live contract interactions", () => {
     60_000,
   );
 
-  it(
+  liveTest(
     "prepares a DAI transfer with asset-outflow safety even when traces are thin",
     async () => {
       const recipient = "0x0000000000000000000000000000000000000001";
@@ -227,7 +293,7 @@ describeLive("live contract interactions", () => {
     60_000,
   );
 
-  it(
+  liveTest(
     "prepares a DAI approval with spender-approval safety",
     async () => {
       const spender = "0x0000000000000000000000000000000000000001";
@@ -258,7 +324,7 @@ describeLive("live contract interactions", () => {
     60_000,
   );
 
-  it(
+  liveTest(
     "blocks DAI signing hand-off when live simulation reverts",
     async () => {
       const recipient = "0x0000000000000000000000000000000000000001";
@@ -290,7 +356,7 @@ describeLive("live contract interactions", () => {
     60_000,
   );
 
-  it(
+  liveTest(
     "decodes a DAI transfer transaction with resolved calldata names",
     async () => {
       const decoded = await json(`/v1/ethereum/tx/${DAI_TRANSFER_TX_HASH}`);
@@ -325,7 +391,7 @@ describeLive("live contract interactions", () => {
     60_000,
   );
 
-  it(
+  liveTest(
     "loads a Base proxy and reads balanceOf through the resolved implementation ABI",
     async () => {
       const resolved = await json(`/v1/base/${BASE_PROXY}/abi`);
@@ -340,7 +406,7 @@ describeLive("live contract interactions", () => {
     60_000,
   );
 
-  it(
+  liveTest(
     "resolves a Basename through the Base chain path",
     async () => {
       const resolved = await json("/v1/base/name/greg.base.eth");
@@ -353,7 +419,7 @@ describeLive("live contract interactions", () => {
     60_000,
   );
 
-  it(
+  liveTest(
     "loads an unverified Sepolia contract and exposes the decompiled changeOwner write",
     async () => {
       const resolved = await json(`/v1/11155111/${SEPOLIA_UNVERIFIED}/abi?${rpcParam(SEPOLIA_RPC_URL)}`);
@@ -368,7 +434,7 @@ describeLive("live contract interactions", () => {
     90_000,
   );
 
-  it(
+  liveTest(
     "marks a live decompiled write as high-friction even when simulation succeeds",
     async () => {
       const prepared = await json(
@@ -400,7 +466,7 @@ describeLive("live contract interactions", () => {
     90_000,
   );
 
-  it(
+  liveTest(
     "loads a BNB Smart Chain contract via rpc_url and reads balanceOf",
     async () => {
       const path = `/v1/56/${BNB_ETH}`;
@@ -415,7 +481,7 @@ describeLive("live contract interactions", () => {
     60_000,
   );
 
-  it(
+  liveTest(
     "loads a Monad mainnet token via default RPC and reads balanceOf",
     async () => {
       const resolved = await json(`/v1/monad/${MONAD_AUSD}/abi`);
@@ -429,7 +495,7 @@ describeLive("live contract interactions", () => {
     90_000,
   );
 
-  it(
+  liveTest(
     "loads a Monad testnet token via default RPC and reads balanceOf",
     async () => {
       const resolved = await json(`/v1/monad-testnet/${MONAD_TESTNET_WETH}/abi`);
@@ -443,7 +509,7 @@ describeLive("live contract interactions", () => {
     90_000,
   );
 
-  it(
+  liveTest(
     "loads a Viction contract via custom chain id and rpc_url, then reads balanceOf",
     async () => {
       const path = `/v1/88/${VICTION_TOKEN}`;
@@ -459,7 +525,7 @@ describeLive("live contract interactions", () => {
     90_000,
   );
 
-  it(
+  liveTest(
     "exposes runtime metrics after live agent-style calls",
     async () => {
       const read = await json(`/v1/ethereum/${DAI}/read`, postRead("balanceOf", [DAI]));
