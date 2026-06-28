@@ -1,4 +1,4 @@
-import { describe, it, expect, type TestContext } from "vitest";
+import { describe, it, expect, afterAll, type TestContext } from "vitest";
 import { app } from "../src/server.js";
 
 const RUN_LIVE = process.env.RUN_LIVE_CONTRACT_TESTS === "1";
@@ -143,6 +143,60 @@ function expectWriteNamed(result: any, functionName: string): void {
   expect(result.interface.writes.map((fn: any) => fn.function)).toContain(functionName);
 }
 
+// --- Upstream-resilient name assertions (SPEC §7 reliability) ----------------
+// gulltoppr learns function names from upstream verified sources (Etherscan,
+// Sourcify) or, failing those, from heimdall decompilation. When the verified
+// rungs are momentarily unavailable, resolution falls through to decompilation
+// and names come back synthetic ("Unresolved_<selector>") — an upstream
+// availability blip, NOT a regression in this service. These helpers tell the
+// two apart so a third-party outage becomes a visible *skip*, not a red run:
+//   • name present            → pass (whatever the source)
+//   • name absent + synthetic → upstream sources were down → skip (transient)
+//   • name absent + verified  → a real regression in our parsing → FAIL
+// The mainnet-DAI test stays a strict, never-skipped canary: if even DAI can't
+// resolve to real names, the breakage is systemic and we want it loud and red.
+function isSyntheticResolution(result: any): boolean {
+  const c = result?.provenance?.confidence;
+  return result?.provenance?.names_synthetic === true || c === "decompiled" || c === "selector-only";
+}
+
+function expectReadNamedOrTransient(result: any, functionName: string): void {
+  const names = result.interface.reads.map((fn: any) => fn.function);
+  if (names.includes(functionName)) return;
+  if (isSyntheticResolution(result)) {
+    throw new TransientUpstreamError(
+      `verified sources unavailable for chain ${result.chain} ${result.address}: resolved as ` +
+        `${result.provenance?.confidence}; "${functionName}" not named`,
+    );
+  }
+  expect(names).toContain(functionName); // verified/partial but missing → real regression
+}
+
+function expectWriteNamedOrTransient(result: any, functionName: string, selector: string): void {
+  const names = result.interface.writes.map((fn: any) => fn.function);
+  if (names.includes(functionName)) return;
+  const sel = selector.replace(/^0x/, "");
+  if (names.includes(`Unresolved_${sel}`)) {
+    throw new TransientUpstreamError(
+      `heimdall left selector 0x${sel} unnamed (Unresolved_${sel}) for chain ${result.chain} ` +
+        `${result.address} — signature resolution unavailable`,
+    );
+  }
+  expect(names).toContain(functionName); // selector absent entirely → real regression
+}
+
+// For verbs that only expose the function name via human-readable text (e.g.
+// prepare_tx's human_summary): skip when heimdall left the selector unnamed
+// instead of failing on the synthetic "Unresolved_<selector>" string.
+function throwIfSelectorUnresolved(text: string, selector: string): void {
+  const sel = selector.replace(/^0x/, "");
+  if (text.includes(`Unresolved_${sel}`)) {
+    throw new TransientUpstreamError(
+      `heimdall left selector 0x${sel} unnamed (Unresolved_${sel}) — signature resolution unavailable`,
+    );
+  }
+}
+
 function expectUintRead(result: any, functionSignature: string): void {
   expect(result.function_signature).toBe(functionSignature);
   expect(result.decoded).toHaveLength(1);
@@ -189,6 +243,11 @@ describeLive("live contract interactions", () => {
     60_000,
   );
 
+  // CANARY — strict, never skipped. DAI is the most-verified contract on
+  // mainnet and the one chain with a guaranteed Etherscan key. If even this
+  // resolves to synthetic names, the failure is systemic (key revoked, parser
+  // broken, both verified-source providers down) and the other tests' transient
+  // skips would be hiding a real outage — so this one stays loud and red.
   liveTest(
     "loads DAI on mainnet and reads balanceOf",
     async () => {
@@ -197,7 +256,7 @@ describeLive("live contract interactions", () => {
       expect(resolved.address).toBe(DAI);
       expect(resolved.chain).toBe(1);
       expectReadNamed(resolved, "balanceOf");
-      expect(resolved.provenance.confidence).toMatch(/^(verified|partial|decompiled)$/);
+      expect(resolved.provenance.confidence).toMatch(/^(verified|partial)$/);
 
       const read = await json(`/v1/ethereum/${DAI}/read`, postRead("balanceOf", [DAI]));
       expectUintRead(read, "balanceOf(address)");
@@ -414,7 +473,7 @@ describeLive("live contract interactions", () => {
       expect(resolved.address.toLowerCase()).toBe(BASE_PROXY);
       expect(resolved.chain).toBe(8453);
       expect(resolved.proxy?.resolved_implementation).toMatch(/^0x[0-9a-fA-F]{40}$/);
-      expectReadNamed(resolved, "balanceOf");
+      expectReadNamedOrTransient(resolved, "balanceOf");
 
       const read = await json(`/v1/base/${BASE_PROXY}/read`, postRead("balanceOf", [HOLDER]));
       expectUintRead(read, "balanceOf(address)");
@@ -440,12 +499,18 @@ describeLive("live contract interactions", () => {
     async () => {
       const resolved = await json(`/v1/11155111/${SEPOLIA_UNVERIFIED}/abi?${rpcParam(SEPOLIA_RPC_URL)}`);
       expect(resolved.chain).toBe(11155111);
-      expect(resolved.provenance).toMatchObject({
-        source: "heimdall-decompiled",
-        confidence: "decompiled",
-        names_synthetic: true,
-      });
-      expectWriteNamed(resolved, "changeOwner");
+      // Unverified contract: we expect a heimdall decompilation. If heimdall-api
+      // is down, resolution falls through to selector-only (4byte) — an upstream
+      // outage, not a regression — so skip rather than fail on the wrong source.
+      if (resolved.provenance.source !== "heimdall-decompiled") {
+        throw new TransientUpstreamError(
+          `expected heimdall decompilation; got ${resolved.provenance.source}/` +
+            `${resolved.provenance.confidence} — heimdall-api unavailable`,
+        );
+      }
+      expect(resolved.provenance.confidence).toBe("decompiled");
+      expect(resolved.provenance.names_synthetic).toBe(true);
+      expectWriteNamedOrTransient(resolved, "changeOwner", "0xa6f9dae1");
     },
     90_000,
   );
@@ -462,6 +527,10 @@ describeLive("live contract interactions", () => {
         },
       );
 
+      // If heimdall left the selector unnamed (signature DB blip), the summary
+      // reads "Unresolved_a6f9dae1(...)" instead of "changeOwner(...)" — that's
+      // an upstream outage, so skip rather than fail.
+      throwIfSelectorUnresolved(prepared.human_summary, "0xa6f9dae1");
       expect(prepared.human_summary).toContain("changeOwner(address)");
       expect(prepared.simulation.success).toBe(true);
       expect(prepared.deeplink).toContain("/11155111/");
@@ -489,7 +558,7 @@ describeLive("live contract interactions", () => {
       const resolved = await json(`${path}/abi?${rpcParam(BNB_RPC_URL)}`);
       expect(resolved.address.toLowerCase()).toBe(BNB_ETH);
       expect(resolved.chain).toBe(56);
-      expectReadNamed(resolved, "balanceOf");
+      expectReadNamedOrTransient(resolved, "balanceOf");
 
       const read = await json(`${path}/read?${rpcParam(BNB_RPC_URL)}`, postRead("balanceOf", [HOLDER]));
       expectUintRead(read, "balanceOf(address)");
@@ -503,7 +572,7 @@ describeLive("live contract interactions", () => {
       const resolved = await json(`/v1/monad/${MONAD_AUSD}/abi`);
       expect(resolved.address).toBe(MONAD_AUSD);
       expect(resolved.chain).toBe(143);
-      expectReadNamed(resolved, "balanceOf");
+      expectReadNamedOrTransient(resolved, "balanceOf");
 
       const read = await json(`/v1/monad/${MONAD_AUSD}/read`, postRead("balanceOf", [HOLDER]));
       expectUintRead(read, "balanceOf(address)");
@@ -517,7 +586,7 @@ describeLive("live contract interactions", () => {
       const resolved = await json(`/v1/monad-testnet/${MONAD_TESTNET_WETH}/abi`);
       expect(resolved.address).toBe(MONAD_TESTNET_WETH);
       expect(resolved.chain).toBe(10143);
-      expectReadNamed(resolved, "balanceOf");
+      expectReadNamedOrTransient(resolved, "balanceOf");
 
       const read = await json(`/v1/monad-testnet/${MONAD_TESTNET_WETH}/read`, postRead("balanceOf", [HOLDER]));
       expectUintRead(read, "balanceOf(address)");
@@ -533,7 +602,7 @@ describeLive("live contract interactions", () => {
       expect(resolved.address).toBe(VICTION_TOKEN);
       expect(resolved.chain).toBe(88);
       expect(resolved.provenance.confidence).toMatch(/^(verified|partial|decompiled|selector-only)$/);
-      expectReadNamed(resolved, "balanceOf");
+      expectReadNamedOrTransient(resolved, "balanceOf");
 
       const read = await json(`${path}/read?${rpcParam(VICTION_RPC_URL)}`, postRead("balanceOf", [HOLDER]));
       expectUintRead(read, "balanceOf(address)");
@@ -559,4 +628,41 @@ describeLive("live contract interactions", () => {
     },
     60_000,
   );
+
+  // Per-rung health snapshot → CI job summary (and stdout). Surfaces a degrading
+  // dependency (rising failure_rate / latency on Etherscan, Sourcify, heimdall,
+  // 4byte, proxy detection) every run — green, skipped, or red — so you can see
+  // a provider going bad *before* it actually flakes the suite. In-process only.
+  afterAll(async () => {
+    if (ENGINE_BASE_URL) return; // these metrics belong to the in-process engine
+    let metrics: any;
+    try {
+      const res = await request("/v1/metrics");
+      if (!res.ok) return;
+      metrics = await res.json();
+    } catch {
+      return;
+    }
+    const rungs = Object.entries(metrics.metrics ?? {})
+      .filter(([name]) => name.startsWith("rung."))
+      .sort(([a], [b]) => a.localeCompare(b));
+    if (!rungs.length) return;
+    const table = [
+      "### Live suite — resolution rung health",
+      "",
+      "| rung | attempts | failures | failure_rate | avg_ms |",
+      "| --- | ---: | ---: | ---: | ---: |",
+      ...rungs.map(
+        ([name, b]: [string, any]) =>
+          `| ${name} | ${b.attempts} | ${b.failures} | ${b.failure_rate} | ${b.avg_latency_ms} |`,
+      ),
+      "",
+    ].join("\n");
+    console.log("\n" + table);
+    const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+    if (summaryPath) {
+      const { appendFileSync } = await import("node:fs");
+      appendFileSync(summaryPath, table + "\n");
+    }
+  });
 });
