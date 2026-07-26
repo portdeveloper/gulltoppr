@@ -10,128 +10,378 @@
     <meta property="og:description" content="The universal, safe, agent-native interface to any EVM contract, including the ones nobody verified." />
     <style>
       :root {
-        --bg: #090a0a; --panel: #111413; --panel2: #171b18; --line: #2a322d;
-        --ink: #f0f3ed; --dim: #98a29a; --acc: #59d98e; --acc2: #e6b450;
-        --warn: #e6b450; --bad: #ff7f6e; --muted: #202620;
+        --bg: #08090a;
+        --bg-soft: #0c0e0f;
+        --surface: #101314;
+        --surface-2: #16191b;
+        --line: #23282a;
+        --line-2: #313739;
+        --ink: #e9edec;
+        --ink-2: #b9c1c0;
+        --dim: #838d8c;
+        --acc: #4fd98b;
+        --acc-dim: #2f7f55;
+        --acc-ink: #04170e;
+        --warn: #e8b757;
+        --bad: #ff8875;
+        --r: 10px;
+        --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+        --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
       }
       * { box-sizing: border-box; }
-      * { scrollbar-color: #67736b #101211; scrollbar-width: thin; }
+      * { scrollbar-color: #4a5453 var(--bg-soft); scrollbar-width: thin; }
       *::-webkit-scrollbar { width: 10px; height: 10px; }
-      *::-webkit-scrollbar-track { background: #101211; }
-      *::-webkit-scrollbar-thumb { background: #67736b; border: 2px solid #101211; border-radius: 999px; }
-      body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-      code, pre, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-      a { color: var(--acc2); text-decoration: none; }
-      a:hover { text-decoration: underline; }
-      .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
-      header { padding: 64px 0 28px; text-align: center; }
-      .logo { font-size: 40px; font-weight: 800; letter-spacing: -0.02em; }
-      .logo .n { color: var(--acc); }
-      .tag { font-size: 20px; margin: 14px 0 6px; }
-      .sub { color: var(--dim); max-width: 620px; margin: 0 auto; }
-      .cta { margin-top: 22px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-      .btn { display: inline-block; padding: 9px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font-weight: 600; }
-      .btn.primary { background: var(--acc); color: #062018; border-color: var(--acc); }
-      section { margin: 34px 0; }
-      h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--dim); margin: 0 0 12px; }
-      .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 18px; box-shadow: inset 0 1px 0 rgba(255,255,255,.03); }
-      .commandbar { border: 1px solid var(--line); border-radius: 8px; background: #0d0f0e; overflow: hidden; }
-      .prompt { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--dim); font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
-      .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--acc); box-shadow: 14px 0 0 var(--warn), 28px 0 0 var(--bad); margin-right: 30px; }
-      .row { display: grid; grid-template-columns: minmax(145px, 210px) minmax(0, 1fr) minmax(180px, 260px) auto; gap: 10px; padding: 12px; align-items: stretch; }
-      .field { min-width: 0; position: relative; }
-      .field::before { content: attr(data-label); position: absolute; top: 7px; left: 12px; color: var(--dim); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; pointer-events: none; }
-      input { width: 100%; height: 58px; background: var(--panel2); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 25px 12px 8px; font: inherit; outline: none; }
-      input:focus { border-color: #3c7a54; box-shadow: 0 0 0 3px rgba(89,217,142,.12); }
-      input.addr, input.chain, input.rpc { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-      input.chain { font-family: inherit; font-weight: 700; }
-      button.go { background: var(--acc); color: #062018; border: none; border-radius: 8px; padding: 0 24px; min-width: 118px; font-weight: 800; cursor: pointer; }
-      button.go:disabled { opacity: .6; cursor: default; }
-      .chips { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
-      .chip { font-size: 12px; color: var(--dim); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; cursor: pointer; background: var(--muted); }
-      .chip:hover { color: var(--ink); }
-      #out { margin-top: 16px; }
-      .badge { display: inline-block; font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 999px; }
-      .b-verified { background: #0f2e22; color: var(--acc); border: 1px solid #1d5b44; }
-      .b-decompiled { background: #2e260f; color: var(--warn); border: 1px solid #5b4a1d; }
-      .b-partial, .b-selector-only { background: #1c2433; color: var(--dim); border: 1px solid var(--line); }
-      .meta { color: var(--dim); font-size: 13px; margin: 8px 0; }
-      .result-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
-      .result-meta { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dim); }
-      .result-meta code { color: var(--ink); }
-      .inspect { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
-      details { min-width: 0; border: 1px solid var(--line); border-radius: 8px; background: #0d0f0e; }
-      summary { cursor: pointer; padding: 8px 10px; color: var(--ink); font-size: 13px; font-weight: 700; }
-      .detail-body { border-top: 1px solid var(--line); padding: 8px 10px; color: var(--dim); font-size: 12.5px; overflow-wrap: anywhere; }
-      .detail-body code { color: var(--ink); }
+      *::-webkit-scrollbar-track { background: var(--bg-soft); }
+      *::-webkit-scrollbar-thumb { background: #4a5453; border: 3px solid var(--bg-soft); border-radius: 999px; }
+      html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font: 15.5px/1.6 var(--sans);
+        -webkit-font-smoothing: antialiased;
+      }
+      code, pre, .mono { font-family: var(--mono); }
+      a { color: var(--ink); text-decoration: none; }
+      a:hover { color: var(--acc); }
+      h1, h2, h3 { margin: 0; font-weight: 650; letter-spacing: -0.02em; }
+      p { margin: 0; }
+      .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+
+      /* ---------- top bar ---------- */
+      .topbar {
+        position: sticky; top: 0; z-index: 20;
+        background: rgba(8, 9, 10, 0.82);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--line);
+      }
+      .topbar .wrap { display: flex; align-items: center; gap: 18px; height: 56px; }
+      .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; letter-spacing: -0.02em; font-size: 16px; }
+      .brand .horse { font-size: 17px; }
+      .brand .dot { color: var(--acc); }
+      .nav { margin-left: auto; display: flex; align-items: center; gap: 20px; font-size: 14px; color: var(--dim); }
+      .nav a { color: var(--dim); }
+      .nav a:hover { color: var(--ink); }
+      .nav .ghost {
+        color: var(--ink); border: 1px solid var(--line-2); border-radius: 8px;
+        padding: 5px 12px; font-weight: 550;
+      }
+      .nav .ghost:hover { border-color: var(--acc-dim); color: var(--acc); }
+      @media (max-width: 860px) { .nav .hide-sm { display: none; } }
+      @media (max-width: 560px) { .nav { gap: 14px; } .nav .hide-xs { display: none; } }
+
+      /* ---------- hero ---------- */
+      .hero { padding: 76px 0 44px; text-align: center; }
+      .eyebrow {
+        display: inline-flex; align-items: center; gap: 8px;
+        font: 12px/1 var(--mono); letter-spacing: 0.02em; color: var(--dim);
+        border: 1px solid var(--line); background: var(--surface);
+        border-radius: 999px; padding: 7px 13px; margin-bottom: 22px;
+      }
+      .eyebrow b { color: var(--acc); font-weight: 600; }
+      .hero h1 { font-size: clamp(30px, 5.2vw, 46px); line-height: 1.1; letter-spacing: -0.035em; }
+      .hero h1 em { font-style: normal; color: var(--acc); }
+      .lede { max-width: 640px; margin: 20px auto 0; color: var(--ink-2); font-size: 17px; }
+      .cta { margin-top: 30px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+      .btn {
+        display: inline-flex; align-items: center; gap: 7px;
+        padding: 10px 17px; border-radius: 9px; border: 1px solid var(--line-2);
+        background: var(--surface); color: var(--ink); font-weight: 600; font-size: 14.5px;
+        cursor: pointer; transition: border-color .15s, color .15s, background .15s;
+      }
+      .btn:hover { border-color: var(--line-2); background: var(--surface-2); color: var(--ink); }
+      .btn.primary { background: var(--acc); color: var(--acc-ink); border-color: var(--acc); }
+      .btn.primary:hover { background: #63e79a; color: var(--acc-ink); }
+      .facts {
+        margin: 40px auto 0; display: flex; flex-wrap: wrap; justify-content: center;
+        gap: 10px 28px; color: var(--dim); font-size: 13.5px;
+      }
+      .facts span { display: inline-flex; align-items: center; gap: 7px; }
+      .facts b { color: var(--ink-2); font-weight: 600; }
+      .tick { color: var(--acc); }
+
+      /* ---------- sections ---------- */
+      section { padding: 52px 0; border-top: 1px solid var(--line); scroll-margin-top: 8px; }
+      section:first-of-type { border-top: 0; }
+      .shead { margin-bottom: 22px; }
+      .shead .kicker { font: 11.5px/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--acc); }
+      .shead h2 { font-size: 24px; margin-top: 11px; }
+      .shead p { color: var(--dim); margin-top: 8px; max-width: 640px; font-size: 14.5px; }
+
+      /* ---------- playground ---------- */
+      .console { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); overflow: hidden; }
+      .console-bar {
+        display: flex; align-items: center; gap: 10px;
+        padding: 11px 16px; border-bottom: 1px solid var(--line);
+        background: var(--bg-soft); font: 12.5px/1 var(--mono); color: var(--dim);
+      }
+      .lights { display: inline-flex; gap: 6px; margin-right: 4px; }
+      .lights i { width: 9px; height: 9px; border-radius: 50%; background: #2c3234; }
+      .lights i:first-child { background: #3d4a44; }
+      .console-bar .verb { color: var(--ink-2); }
+      .console-bar .live { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+      .console-bar .live::before {
+        content: ""; width: 7px; height: 7px; border-radius: 50%;
+        background: var(--acc); box-shadow: 0 0 0 3px rgba(79, 217, 139, .16);
+      }
+      .form { padding: 20px 16px; }
+      .fields { display: grid; grid-template-columns: 200px minmax(0, 1fr) auto; gap: 14px; align-items: end; }
+      .field { min-width: 0; }
+      .field > label {
+        display: block; margin-bottom: 7px;
+        font: 11px/1 var(--mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--dim);
+      }
+      .field .hint { margin-top: 7px; font-size: 12.5px; color: var(--dim); }
+      input {
+        width: 100%; height: 46px; background: var(--surface-2); color: var(--ink);
+        border: 1px solid var(--line-2); border-radius: 9px; padding: 0 13px;
+        font: 15px/1 var(--sans); outline: none;
+        transition: border-color .15s, box-shadow .15s;
+      }
+      input::placeholder { color: #5f6968; }
+      input:hover { border-color: #3d4547; }
+      input:focus { border-color: var(--acc-dim); box-shadow: 0 0 0 3px rgba(79, 217, 139, .13); }
+      input.mono-in { font-family: var(--mono); font-size: 13.5px; letter-spacing: 0.01em; }
+      button.go {
+        height: 46px; min-width: 132px; padding: 0 22px;
+        background: var(--acc); color: var(--acc-ink); border: 1px solid var(--acc);
+        border-radius: 9px; font: 600 15px/1 var(--sans); cursor: pointer;
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        transition: background .15s, opacity .15s;
+      }
+      button.go:hover:not(:disabled) { background: #63e79a; }
+      button.go:disabled { opacity: .55; cursor: progress; }
+
+      .advanced { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 14px; }
+      .advanced > summary {
+        cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 8px;
+        font-size: 13.5px; color: var(--dim);
+      }
+      .advanced > summary::-webkit-details-marker { display: none; }
+      .advanced > summary::before {
+        content: "›"; display: inline-block; font: 700 15px/1 var(--mono);
+        transition: transform .15s; color: var(--acc);
+      }
+      .advanced[open] > summary::before { transform: rotate(90deg); }
+      .advanced > summary:hover { color: var(--ink); }
+      .advanced .field { margin-top: 14px; }
+
+      .examples { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 0 16px 18px; }
+      .examples .lbl { font: 11px/1 var(--mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--dim); margin-right: 2px; }
+      .chip {
+        font-size: 13px; color: var(--ink-2); border: 1px solid var(--line-2);
+        border-radius: 999px; padding: 5px 12px; cursor: pointer; background: var(--surface-2);
+        transition: border-color .15s, color .15s;
+      }
+      .chip:hover { color: var(--ink); border-color: var(--acc-dim); }
+      .chip.hot { color: var(--warn); border-color: #5c4a1e; background: #211b0d; }
+      .chip.hot:hover { border-color: var(--warn); }
+
+      /* ---------- results ---------- */
+      #out:not(:empty) { border-top: 1px solid var(--line); padding: 18px 16px; background: var(--bg-soft); }
+      .status { color: var(--dim); font-size: 14px; display: flex; align-items: center; gap: 10px; }
+      .spin {
+        width: 13px; height: 13px; border-radius: 50%; flex: none;
+        border: 2px solid var(--line-2); border-top-color: var(--acc);
+        animation: spin .7s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .err { color: var(--bad); font-family: var(--mono); font-size: 13.5px; overflow-wrap: anywhere; }
+
+      .summary-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .badge { display: inline-flex; align-items: center; font: 700 11.5px/1 var(--sans); letter-spacing: .06em; padding: 6px 10px; border-radius: 6px; }
+      .b-verified { background: #0f2d21; color: var(--acc); border: 1px solid #1f5b42; }
+      .b-decompiled { background: #2b2410; color: var(--warn); border: 1px solid #5b4a1d; }
+      .b-partial, .b-selector-only { background: #1b2126; color: var(--ink-2); border: 1px solid var(--line-2); }
+      .kv { display: inline-flex; align-items: baseline; gap: 6px; font-size: 13px; color: var(--dim); }
+      .kv b { font-weight: 500; }
+      .kv code { color: var(--ink-2); font-size: 12.5px; }
+      .notice {
+        margin-top: 12px; padding: 11px 13px; border-radius: 9px; font-size: 13.5px;
+        background: #1d1809; border: 1px solid #4b3d15; color: var(--warn);
+      }
+      .inspect { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 14px; align-items: start; }
+      details.card { min-width: 0; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
+      details.card > summary {
+        cursor: pointer; padding: 10px 12px; font-size: 13px; font-weight: 600; color: var(--ink);
+        list-style: none; display: flex; align-items: center; gap: 8px;
+      }
+      details.card > summary::-webkit-details-marker { display: none; }
+      details.card > summary::after { content: "+"; margin-left: auto; color: var(--dim); font-family: var(--mono); }
+      details.card[open] > summary::after { content: "−"; }
+      .detail-body {
+        border-top: 1px solid var(--line); padding: 11px 12px; color: var(--dim);
+        font-size: 12.5px; overflow-wrap: anywhere; display: grid; gap: 4px;
+      }
+      .detail-body code { color: var(--ink-2); }
+      .detail-body b { color: var(--ink-2); font-weight: 500; }
       .warn-text { color: var(--warn); }
-      .method-tools { margin-top: 14px; display: flex; gap: 10px; align-items: center; }
-      .method-tools .field { flex: 1; }
-      .method-tools input { height: 46px; padding-top: 21px; }
-      .fns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-top: 14px; }
-      .fn-col { min-width: 0; border: 1px solid var(--line); border-radius: 8px; background: #0d0f0e; overflow: hidden; }
-      .fn-col h3 { margin: 0; padding: 8px 10px; border-bottom: 1px solid var(--line); color: var(--ink); font-size: 13px; }
-      .fn-list { margin: 0; padding: 0; list-style: none; max-height: 288px; overflow-y: auto; overflow-x: hidden; }
-      .fn-list li { min-width: 0; padding: 7px 10px; border-bottom: 1px solid rgba(42,50,45,.75); }
-      .fn-list li:nth-child(even) { background: rgba(255,255,255,.015); }
+
+      .filter-row { margin-top: 18px; display: flex; align-items: center; gap: 12px; }
+      .filter-row .field { flex: 1; }
+      .filter-row input { height: 42px; }
+      .fns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+      .fn-col { min-width: 0; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); overflow: hidden; }
+      .fn-col h3 {
+        margin: 0; padding: 10px 12px; border-bottom: 1px solid var(--line);
+        font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); font-weight: 600;
+      }
+      .fn-col h3 b { color: var(--ink); font-weight: 700; }
+      .fn-list { margin: 0; padding: 0; list-style: none; max-height: 320px; overflow-y: auto; overflow-x: hidden; }
+      .fn-list li { min-width: 0; padding: 8px 12px; border-bottom: 1px solid rgba(35, 40, 42, .8); }
+      .fn-list li:last-child { border-bottom: 0; }
+      .fn-list li:hover { background: var(--surface-2); }
       .fn-line { min-width: 0; display: flex; align-items: center; gap: 8px; }
-      .fn-signature { min-width: 0; flex: 1; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .fn-signature {
+        min-width: 0; flex: 1; font-family: var(--mono); font-size: 12.5px; color: var(--ink);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
       .fn-badges { display: inline-flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
-      .mini { display: inline-block; border: 1px solid var(--line); border-radius: 999px; padding: 1px 6px; color: var(--dim); font: 10px/1.5 ui-sans-serif, system-ui, sans-serif; }
+      .mini {
+        display: inline-block; border: 1px solid var(--line-2); border-radius: 999px;
+        padding: 1px 7px; color: var(--dim); font: 10px/1.6 var(--sans); white-space: nowrap;
+      }
       .mini.payable { color: var(--warn); border-color: #5b4a1d; background: #241d0b; }
       .mini.inferred { color: var(--bad); border-color: #66362f; background: #271412; }
-      .fn-hint { margin-top: 3px; color: var(--dim); font-size: 11.5px; overflow-wrap: anywhere; }
-      .err { color: var(--bad); font-family: ui-monospace, monospace; font-size: 13px; }
-      pre { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; overflow: auto; font-size: 13px; }
-      .grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
-      .grid2 > div { min-width: 0; }
-      footer { color: var(--dim); font-size: 13px; text-align: center; padding: 40px 0; border-top: 1px solid var(--line); margin-top: 40px; }
-      @media (max-width: 760px) {
-        .row { grid-template-columns: 1fr; }
-        button.go { height: 48px; }
-        .fns, .grid2, .inspect { grid-template-columns: 1fr; }
-        .fn-line { align-items: flex-start; flex-direction: column; gap: 4px; }
+      .fn-hint { margin-top: 4px; color: var(--dim); font-size: 11.5px; overflow-wrap: anywhere; }
+      .empty { color: var(--dim); font-size: 13px; }
+
+      /* ---------- ladder ---------- */
+      .ladder { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+      .rung {
+        border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
+        padding: 14px; position: relative;
+      }
+      .rung .n { font: 11px/1 var(--mono); color: var(--acc); }
+      .rung h3 { font-size: 14.5px; margin-top: 9px; }
+      .rung p { color: var(--dim); font-size: 12.5px; margin-top: 6px; }
+      .rung .conf { margin-top: 10px; font: 10.5px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+      .rung.deep { border-color: #4b3d15; background: #16130a; }
+      .rung.deep .n, .rung.deep .conf { color: var(--warn); }
+      .after {
+        margin-top: 16px; color: var(--dim); font-size: 13.5px;
+        border-left: 2px solid var(--acc-dim); padding-left: 13px;
+      }
+
+      /* ---------- integrate tabs ---------- */
+      .tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--line); margin-bottom: 0; }
+      .tab {
+        appearance: none; background: none; border: 0; border-bottom: 2px solid transparent;
+        color: var(--dim); font: 600 14px/1 var(--sans); padding: 10px 14px; cursor: pointer;
+      }
+      .tab:hover { color: var(--ink); }
+      .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--acc); }
+      .panel-body { padding-top: 16px; }
+      .panel-body[hidden] { display: none; }
+      .code {
+        position: relative; border: 1px solid var(--line); border-radius: 10px;
+        background: var(--bg-soft); overflow: hidden;
+      }
+      .code pre { margin: 0; padding: 16px 54px 16px 16px; overflow-x: auto; font-size: 13px; line-height: 1.65; color: var(--ink-2); }
+      .code .cm { color: var(--dim); }
+      .code .st { color: var(--acc); }
+      .copy {
+        position: absolute; top: 9px; right: 9px; background: var(--surface-2);
+        border: 1px solid var(--line-2); color: var(--dim); border-radius: 7px;
+        font: 11px/1 var(--sans); padding: 6px 9px; cursor: pointer;
+      }
+      .copy:hover { color: var(--ink); border-color: var(--acc-dim); }
+      .undercode { margin-top: 12px; color: var(--dim); font-size: 13.5px; }
+      .undercode a { color: var(--acc); }
+      .undercode a:hover { text-decoration: underline; }
+
+      /* ---------- demo ---------- */
+      /* cap at the gif's native 813px so it never upscales into mush */
+      .demo-frame {
+        border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+        background: var(--bg-soft); max-width: 813px; margin: 0 auto;
+      }
+      .demo-frame img { width: 100%; display: block; }
+
+      /* ---------- footer ---------- */
+      footer { border-top: 1px solid var(--line); padding: 34px 0 46px; color: var(--dim); font-size: 13.5px; }
+      footer .wrap { display: flex; flex-wrap: wrap; gap: 14px 26px; align-items: baseline; }
+      footer .links { display: flex; flex-wrap: wrap; gap: 14px 20px; margin-left: auto; }
+      footer a { color: var(--ink-2); }
+      footer a:hover { color: var(--acc); }
+      footer .credit { max-width: 100%; }
+
+      @media (max-width: 900px) {
+        .ladder { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+      @media (max-width: 740px) {
+        .hero { padding: 52px 0 34px; }
+        .fields { grid-template-columns: 1fr; align-items: stretch; }
+        button.go { width: 100%; }
+        .fns, .inspect, .ladder { grid-template-columns: 1fr; }
+        .fn-line { flex-direction: column; align-items: flex-start; gap: 5px; }
         .fn-signature { white-space: normal; overflow-wrap: anywhere; }
         .fn-badges { justify-content: flex-start; }
-        pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+        footer .links { margin-left: 0; }
+      }
+      @media (max-width: 480px) {
+        /* keep a full 42-char address readable inside a narrow field */
+        input.mono-in { font-size: 12px; letter-spacing: -0.01em; padding: 0 10px; }
       }
     </style>
   </head>
   <body>
-    <div class="wrap">
-      <header>
-        <div class="logo">🐴 gulltoppr<span class="n">.</span></div>
-        <div class="tag">Interact with <b>any</b> contract on <b>any</b> EVM chain.</div>
-        <p class="sub">
-          The universal, safe, agent-native interface to any EVM contract, including the ones
-          nobody verified. Resolve an ABI (even from raw bytecode, via decompilation), read,
-          simulate, and prepare <b>non-custodial</b> transactions. Built for AI agents: MCP + SDK + REST.
+    <div class="topbar">
+      <div class="wrap">
+        <a class="brand" href="#top"><span class="horse">🐴</span>gulltoppr<span class="dot">.</span></a>
+        <nav class="nav">
+          <a href="#try">Playground</a>
+          <a href="#ladder" class="hide-sm">How it resolves</a>
+          <a href="#integrate" class="hide-xs">Integrate</a>
+          <a href="integrations.md" class="hide-sm">Docs</a>
+          <a class="ghost" href="https://github.com/portdeveloper/gulltoppr">GitHub</a>
+        </nav>
+      </div>
+    </div>
+
+    <div class="wrap" id="top">
+      <div class="hero">
+        <div class="eyebrow">MCP · SDK · REST — <b>non-custodial</b>, never signs</div>
+        <h1>Interact with <em>any</em> contract<br />on <em>any</em> EVM chain.</h1>
+        <p class="lede">
+          gulltoppr resolves a usable ABI for any address — including the ones nobody verified,
+          straight from bytecode — then lets an agent read, simulate, and prepare transactions
+          with provenance it can actually reason about.
         </p>
         <div class="cta">
-          <a class="btn primary" href="https://github.com/portdeveloper/gulltoppr">GitHub</a>
-          <a class="btn" href="https://www.npmjs.com/package/gulltoppr">npm</a>
-          <a class="btn" href="https://mcp.gulltoppr.dev/mcp">MCP endpoint</a>
-          <a class="btn" href="integrations.md">Integration recipes</a>
+          <a class="btn primary" href="#try">Try the playground</a>
+          <a class="btn" href="#integrate">Add to your agent</a>
+          <a class="btn" href="https://github.com/portdeveloper/gulltoppr">GitHub</a>
         </div>
-      </header>
+        <div class="facts">
+          <span><i class="tick">◆</i> <b>7 verbs</b>, one resolution ladder</span>
+          <span><i class="tick">◆</i> Works on <b>unverified</b> contracts</span>
+          <span><i class="tick">◆</i> <b>Never</b> holds a key or signs</span>
+        </div>
+      </div>
 
-      <section>
-        <h2>Watch an agent do it</h2>
-        <img src="demo.gif" alt="An agent resolving a live unverified MEV bot via the gulltoppr MCP: decompiled ABI with provenance warning and a live read"
-             style="width:100%;border:1px solid var(--line);border-radius:14px;display:block" loading="lazy" />
-        <p class="meta">A real session: an <b>unverified</b> MEV bot that traded seconds earlier (no source on
-          Etherscan, nothing on 4byte) resolved to a full interface in two MCP tool calls, with provenance the
-          agent can reason about. Try the same contract yourself below.</p>
-      </section>
+      <section id="try">
+        <div class="shead">
+          <div class="kicker">Playground</div>
+          <h2>Resolve any contract, right now</h2>
+          <p>
+            Runs against the live engine at <code>api.gulltoppr.dev</code> from your browser — no key, no signup.
+            Paste an unverified address: it still resolves, and tells you the ABI was decompiled.
+          </p>
+        </div>
 
-      <section>
-        <h2>Try it: resolve any contract</h2>
-        <div class="panel">
-          <div class="commandbar">
-            <div class="prompt"><span class="dot"></span><span>gulltoppr resolve --abi</span></div>
-            <div class="row">
-              <div class="field" data-label="chain">
-                <input class="chain" id="chain" list="chain-options" value="ethereum" autocomplete="off" spellcheck="false" />
+        <div class="console">
+          <div class="console-bar">
+            <span class="lights"><i></i><i></i><i></i></span>
+            <span class="verb">GET /v1/{chain}/{address}/abi</span>
+            <span class="live">live engine</span>
+          </div>
+
+          <div class="form">
+            <div class="fields">
+              <div class="field">
+                <label for="chain">Chain</label>
+                <input id="chain" list="chain-options" value="ethereum" autocomplete="off" spellcheck="false" />
                 <datalist id="chain-options">
                   <option value="ethereum" label="Ethereum (1)"></option>
                   <option value="base" label="Base (8453)"></option>
@@ -142,67 +392,162 @@
                   <option value="monad-testnet" label="Monad Testnet (10143)"></option>
                 </datalist>
               </div>
-              <div class="field" data-label="contract">
-                <input class="addr" id="addr" placeholder="0x…" spellcheck="false" />
+              <div class="field">
+                <label for="addr">Contract address</label>
+                <input class="mono-in" id="addr" placeholder="0x… paste any address, verified or not" spellcheck="false" autocomplete="off" />
               </div>
-              <div class="field" data-label="rpc url">
-                <input class="rpc" id="rpc-url" placeholder="https://…" spellcheck="false" />
+              <div class="field">
+                <button class="go" id="go">Resolve ABI</button>
               </div>
-              <button class="go" id="go">Resolve</button>
             </div>
+
+            <details class="advanced">
+              <summary>Advanced — use your own RPC endpoint</summary>
+              <div class="field">
+                <label for="rpc-url">RPC URL <span style="text-transform:none;letter-spacing:0">(optional)</span></label>
+                <input class="mono-in" id="rpc-url" placeholder="https://your-node.example.com/v1/…" spellcheck="false" autocomplete="off" />
+                <div class="hint">Leave blank to use the engine's default public RPC for the selected chain. Private keys are never involved.</div>
+              </div>
+            </details>
           </div>
-          <div class="chips" id="chips"></div>
+
+          <div class="examples">
+            <span class="lbl">Examples</span>
+            <span id="chips" style="display:contents"></span>
+          </div>
+
           <div id="out"></div>
         </div>
-        <p class="meta">Calls the live engine at <code>api.gulltoppr.dev</code> directly from your browser.
-          Paste an <b>unverified</b> contract; it still resolves (and tells you the ABI was decompiled).</p>
       </section>
 
-      <section>
-        <h2>Use it from an agent (MCP)</h2>
-        <pre>{ "mcpServers": { "gulltoppr": { "url": "https://mcp.gulltoppr.dev/mcp" } } }</pre>
-        <p class="meta">Wallet, explorer, and coding-agent recipes live in
-          <a href="integrations.md">the integration guide</a>.</p>
-        <div class="grid2">
-          <div>
-            <h2>…or from code (SDK)</h2>
-            <pre>npm i gulltoppr
-
-import { Gulltoppr } from "gulltoppr";
-const g = new Gulltoppr();
-
-const r = await g.resolveAbi("base", "0x833…2913");
-// r.interface.reads / .writes, r.provenance, r.proxy
-
-const tx = await g.prepareTx("base", addr, "transfer",
-  [to, "1000000"], { from: myWallet });
-// → unsigned tx + wallet request + simulation
-//   + warnings (never signs)</pre>
+      <section id="ladder">
+        <div class="shead">
+          <div class="kicker">How it resolves</div>
+          <h2>Five rungs, and it never gives up at rung one</h2>
+          <p>Every answer carries provenance — source, confidence, and whether names were inferred — so an agent knows exactly how much to trust the interface it just got.</p>
+        </div>
+        <div class="ladder">
+          <div class="rung">
+            <div class="n">01</div>
+            <h3>Etherscan</h3>
+            <p>Verified source and ABI where the explorer has it.</p>
+            <div class="conf">full</div>
           </div>
-          <div>
-            <h2>…or plain REST</h2>
-            <pre>curl 'https://api.gulltoppr.dev/v1/base/0x833…2913/abi?include_abi=false'
-
-# verbs: resolve_abi · read_contract · encode_call
-#        simulate · prepare_tx · decode_tx · resolve_name</pre>
-            <p class="meta">7 verbs, one resolution ladder: Etherscan → Sourcify →
-              proxy → <a href="https://github.com/portdeveloper/heimdall-api">heimdall decompile</a> → 4byte,
-              with first-class <b>provenance</b> so an agent knows how much to trust the ABI.</p>
+          <div class="rung">
+            <div class="n">02</div>
+            <h3>Sourcify</h3>
+            <p>Open, decentralized verification as the second opinion.</p>
+            <div class="conf">full</div>
           </div>
+          <div class="rung">
+            <div class="n">03</div>
+            <h3>Proxy hop</h3>
+            <p>EIP-1967, beacon, and diamond patterns followed to the implementation.</p>
+            <div class="conf">full · partial</div>
+          </div>
+          <div class="rung deep">
+            <div class="n">04</div>
+            <h3>Decompile</h3>
+            <p>heimdall lifts an interface out of raw bytecode when there is no source at all.</p>
+            <div class="conf">decompiled</div>
+          </div>
+          <div class="rung deep">
+            <div class="n">05</div>
+            <h3>4byte</h3>
+            <p>Selector lookup as the floor — you still get callable signatures.</p>
+            <div class="conf">selector-only</div>
+          </div>
+        </div>
+        <p class="after">
+          Then use it: <code>resolve_abi</code> · <code>read_contract</code> · <code>encode_call</code> ·
+          <code>simulate</code> · <code>prepare_tx</code> · <code>decode_tx</code> · <code>resolve_name</code>.
+          <code>prepare_tx</code> returns an unsigned transaction, a wallet request, a simulation, and warnings — signing stays with the user.
+        </p>
+      </section>
+
+      <section id="demo">
+        <div class="shead">
+          <div class="kicker">Proof</div>
+          <h2>An agent resolving a live unverified MEV bot</h2>
+          <p>No source on Etherscan, nothing on 4byte, trading seconds earlier — resolved to a full interface in two MCP tool calls, with a provenance warning attached. That exact contract is the first example chip above.</p>
+        </div>
+        <div class="demo-frame">
+          <img src="demo.gif" alt="An agent resolving a live unverified MEV bot via the gulltoppr MCP: decompiled ABI with provenance warning and a live read" loading="lazy" />
         </div>
       </section>
 
-      <footer>
-        gulltoppr · non-custodial · open source ·
-        <a href="https://github.com/portdeveloper/gulltoppr">repo</a> ·
-        <a href="https://www.npmjs.com/package/gulltoppr">npm</a> ·
-        <a href="https://api.gulltoppr.dev/">engine</a> ·
-        <a href="integrations.md">integrations</a> ·
-        <a href="https://github.com/portdeveloper/heimdall-api">heimdall-api</a> ·
-        <a href="https://github.com/portdeveloper/evm-abi-commons">evm-abi-commons (CC0)</a>
-        <br />rides <a href="https://github.com/Jon-Becker/heimdall-rs">heimdall-rs</a> to reach any contract.
-      </footer>
+      <section id="integrate">
+        <div class="shead">
+          <div class="kicker">Integrate</div>
+          <h2>Three ways in</h2>
+          <p>Point an agent at the MCP endpoint, install the typed SDK, or just curl it.</p>
+        </div>
+        <div class="tabs" role="tablist">
+          <button class="tab" role="tab" id="tab-mcp" aria-controls="p-mcp" aria-selected="true">MCP</button>
+          <button class="tab" role="tab" id="tab-sdk" aria-controls="p-sdk" aria-selected="false">SDK</button>
+          <button class="tab" role="tab" id="tab-rest" aria-controls="p-rest" aria-selected="false">REST</button>
+        </div>
+
+        <div class="panel-body" id="p-mcp" role="tabpanel" aria-labelledby="tab-mcp">
+          <div class="code">
+            <button class="copy">Copy</button>
+            <pre>{
+  <span class="st">"mcpServers"</span>: {
+    <span class="st">"gulltoppr"</span>: { <span class="st">"url"</span>: <span class="st">"https://mcp.gulltoppr.dev/mcp"</span> }
+  }
+}</pre>
+          </div>
+          <p class="undercode">Drop it into Claude Code, Claude Desktop, Cursor, or any MCP client. Wallet, explorer, and coding-agent recipes live in <a href="integrations.md">the integration guide</a>.</p>
+        </div>
+
+        <div class="panel-body" id="p-sdk" role="tabpanel" aria-labelledby="tab-sdk" hidden>
+          <div class="code">
+            <button class="copy">Copy</button>
+            <pre>npm i gulltoppr
+
+<span class="cm">import</span> { Gulltoppr } <span class="cm">from</span> <span class="st">"gulltoppr"</span>;
+<span class="cm">const</span> g = <span class="cm">new</span> Gulltoppr();
+
+<span class="cm">const</span> r = <span class="cm">await</span> g.resolveAbi(<span class="st">"base"</span>, <span class="st">"0x833…2913"</span>);
+<span class="cm">// r.interface.reads / .writes, r.provenance, r.proxy</span>
+
+<span class="cm">const</span> tx = <span class="cm">await</span> g.prepareTx(<span class="st">"base"</span>, addr, <span class="st">"transfer"</span>,
+  [to, <span class="st">"1000000"</span>], { from: myWallet });
+<span class="cm">// → unsigned tx + wallet request + simulation + warnings
+//   (it never signs)</span></pre>
+          </div>
+          <p class="undercode">Typed, zero-config, works in Node and the browser. <a href="https://www.npmjs.com/package/gulltoppr">gulltoppr on npm</a>.</p>
+        </div>
+
+        <div class="panel-body" id="p-rest" role="tabpanel" aria-labelledby="tab-rest" hidden>
+          <div class="code">
+            <button class="copy">Copy</button>
+            <pre>curl <span class="st">'https://api.gulltoppr.dev/v1/base/0x833…2913/abi?include_abi=false'</span>
+
+<span class="cm"># same ladder, same provenance, no SDK required
+# chain catalog: https://api.gulltoppr.dev/v1/chains</span></pre>
+          </div>
+          <p class="undercode">Plain HTTP, CORS-enabled — which is exactly how the playground above talks to it.</p>
+        </div>
+      </section>
     </div>
+
+    <footer>
+      <div class="wrap">
+        <span class="credit">
+          gulltoppr · non-custodial · open source · rides
+          <a href="https://github.com/Jon-Becker/heimdall-rs">heimdall-rs</a> to reach any contract.
+        </span>
+        <span class="links">
+          <a href="https://github.com/portdeveloper/gulltoppr">Repo</a>
+          <a href="https://www.npmjs.com/package/gulltoppr">npm</a>
+          <a href="https://api.gulltoppr.dev/">Engine</a>
+          <a href="integrations.md">Integrations</a>
+          <a href="https://github.com/portdeveloper/heimdall-api">heimdall-api</a>
+          <a href="https://github.com/portdeveloper/evm-abi-commons">evm-abi-commons (CC0)</a>
+        </span>
+      </div>
+    </footer>
 
     <script>
       const API = "https://api.gulltoppr.dev";
@@ -217,20 +562,44 @@ const tx = await g.prepareTx("base", addr, "transfer",
         10143: "monad-testnet",
       };
       const examples = [
-        { label: "⚠ MEV bot (unverified!)", chain: "ethereum", addr: "0xbdb3ba9ffe392549e1f8658dd2630c141fdf47b6" },
-        { label: "DAI (ethereum)", chain: "ethereum", addr: "0x6B175474E89094C44Da98b954EedeAC495271d0F" },
-        { label: "USDC (base)", chain: "base", addr: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" },
-        { label: "WETH (ethereum)", chain: "ethereum", addr: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2" },
-        { label: "AUSD (monad)", chain: "monad", addr: "0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a" },
-        { label: "WETH (monad testnet)", chain: "monad-testnet", addr: "0x45477f4709771331db81944A5E20eF95Bc7BA2D7" },
+        { label: "⚠ MEV bot (unverified)", chain: "ethereum", addr: "0xbdb3ba9ffe392549e1f8658dd2630c141fdf47b6", hot: true },
+        { label: "DAI · ethereum", chain: "ethereum", addr: "0x6B175474E89094C44Da98b954EedeAC495271d0F" },
+        { label: "USDC · base", chain: "base", addr: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" },
+        { label: "WETH · ethereum", chain: "ethereum", addr: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2" },
+        { label: "AUSD · monad", chain: "monad", addr: "0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a" },
+        { label: "WETH · monad testnet", chain: "monad-testnet", addr: "0x45477f4709771331db81944A5E20eF95Bc7BA2D7" },
       ];
       const chips = $("chips");
       examples.forEach((e) => {
-        const c = document.createElement("span");
-        c.className = "chip";
+        const c = document.createElement("button");
+        c.type = "button";
+        c.className = e.hot ? "chip hot" : "chip";
         c.textContent = e.label;
         c.onclick = () => { $("chain").value = e.chain; $("addr").value = e.addr; resolve(); };
         chips.appendChild(c);
+      });
+
+      // ---- integrate tabs ----
+      document.querySelectorAll(".tab").forEach((tab) => {
+        tab.onclick = () => {
+          document.querySelectorAll(".tab").forEach((t) => {
+            const on = t === tab;
+            t.setAttribute("aria-selected", String(on));
+            $(t.getAttribute("aria-controls")).hidden = !on;
+          });
+        };
+      });
+      document.querySelectorAll(".copy").forEach((btn) => {
+        btn.onclick = async () => {
+          const text = btn.parentElement.querySelector("pre").innerText;
+          try {
+            await navigator.clipboard.writeText(text);
+            btn.textContent = "Copied";
+          } catch {
+            btn.textContent = "Copy failed";
+          }
+          setTimeout(() => { btn.textContent = "Copy"; }, 1400);
+        };
       });
 
       async function loadChains() {
@@ -271,7 +640,7 @@ const tx = await g.prepareTx("base", addr, "transfer",
       function list(items, kind) {
         return "<ul class='fn-list'>" + (items.length
           ? items.map((f) => methodRow(f, kind)).join("")
-          : "<li class='meta'>none</li>") + "</ul>";
+          : "<li class='empty'>none</li>") + "</ul>";
       }
       function matchesMethod(f, query) {
         if (!query) return true;
@@ -293,11 +662,11 @@ const tx = await g.prepareTx("base", addr, "transfer",
         const readCount = serverFiltered ? reads.length : `${reads.length}/${data.interface.reads.length}`;
         const writeCount = serverFiltered ? writes.length : `${writes.length}/${data.interface.writes.length}`;
         $("fn-grid").innerHTML =
-          `<div class="fn-col"><h3>Read (${readCount})</h3>${list(reads, "read")}</div>` +
-          `<div class="fn-col"><h3>Write (${writeCount})</h3>${list(writes, "write")}</div>`;
+          `<div class="fn-col"><h3>Read <b>${readCount}</b></h3>${list(reads, "read")}</div>` +
+          `<div class="fn-col"><h3>Write <b>${writeCount}</b></h3>${list(writes, "write")}</div>`;
       }
       function detailsBlock(title, body, open = false) {
-        return `<details${open ? " open" : ""}><summary>${esc(title)}</summary><div class="detail-body">${body}</div></details>`;
+        return `<details class="card"${open ? " open" : ""}><summary>${esc(title)}</summary><div class="detail-body">${body}</div></details>`;
       }
       function resolveWarnings(data) {
         const p = data.provenance;
@@ -372,32 +741,40 @@ const tx = await g.prepareTx("base", addr, "transfer",
         const addr = $("addr").value.trim();
         const rpcUrl = $("rpc-url").value.trim();
         const out = $("out");
-        if (!/^0x[0-9a-fA-F]{40}$/.test(addr)) { out.innerHTML = "<p class='err'>Enter a valid 0x address.</p>"; return; }
-        if (rpcUrl && !/^https?:\/\/\S+$/.test(rpcUrl)) { out.innerHTML = "<p class='err'>RPC URL must be http(s) without spaces.</p>"; return; }
+        if (!/^0x[0-9a-fA-F]{40}$/.test(addr)) {
+          out.innerHTML = "<p class='err'>Enter a valid 0x address (40 hex characters).</p>";
+          return;
+        }
+        if (rpcUrl && !/^https?:\/\/\S+$/.test(rpcUrl)) {
+          out.innerHTML = "<p class='err'>RPC URL must be http(s) without spaces.</p>";
+          return;
+        }
         $("go").disabled = true;
-        out.innerHTML = "<p class='meta'>Resolving… (first call may take a few seconds while the engine wakes)</p>";
+        out.innerHTML = "<div class='status'><span class='spin'></span>Resolving… the first call can take a few seconds while the engine wakes.</div>";
         try {
           const res = await fetch(abiUrl(chain, addr, rpcUrl));
           const data = await res.json();
-          if (!res.ok) { out.innerHTML = `<p class='err'>${esc(data.error?.code || res.status)}: ${esc(data.error?.message || "error")}</p>`; return; }
+          if (!res.ok) {
+            out.innerHTML = `<p class='err'>${esc(data.error?.code || res.status)}: ${esc(data.error?.message || "error")}</p>`;
+            return;
+          }
           const p = data.provenance;
-          const badge = `<span class="badge b-${p.confidence}">${p.confidence.toUpperCase()}</span>`;
-          const tok = data.token?.symbol ? ` · token <b>${esc(data.token.symbol)}</b>` : "";
-          const proxyTitle = data.proxy
-            ? data.proxy.pattern === "diamond"
-              ? ` · diamond proxy → ${data.proxy.hops.filter((h) => h.role === "facet").length} facets`
-              : ` · ${data.proxy.pattern} proxy → impl ${data.abi_for}`
-            : "";
-          const proxy = data.proxy
-            ? data.proxy.pattern === "diamond"
-              ? ` · diamond proxy → <code>${esc(String(data.proxy.hops.filter((h) => h.role === "facet").length))}</code> facets`
-              : ` · ${esc(data.proxy.pattern)} proxy → impl <code>${esc(data.abi_for.slice(0, 10))}…</code>`
-            : "";
+          const badge = `<span class="badge b-${p.confidence}">${esc(p.confidence.toUpperCase())}</span>`;
+          const bits = [`<span class="kv"><b>source</b> <code>${esc(p.source)}</code></span>`];
+          if (data.token?.symbol) bits.push(`<span class="kv"><b>token</b> <code>${esc(data.token.symbol)}</code></span>`);
+          if (data.proxy) {
+            bits.push(data.proxy.pattern === "diamond"
+              ? `<span class="kv"><b>diamond proxy</b> <code>${esc(String(data.proxy.hops.filter((h) => h.role === "facet").length))} facets</code></span>`
+              : `<span class="kv"><b>${esc(data.proxy.pattern)} proxy</b> <code title="${attr(data.abi_for)}">${esc(data.abi_for.slice(0, 10))}…</code></span>`);
+          }
+          if (data.cached) bits.push(`<span class="kv"><b>cached</b></span>`);
           out.innerHTML =
-            `<div class="result-head">${badge}<span class="result-meta" title="${attr(`source: ${p.source}${data.token?.symbol ? ` · token ${data.token.symbol}` : ""}${proxyTitle}${data.cached ? " · cached" : ""}`)}">source: ${esc(p.source)}${tok}${proxy}${data.cached ? " · cached" : ""}</span></div>` +
-            (p.names_synthetic ? `<p class="meta" style="color:var(--warn)">⚠ Decompiled: function/param names are inferred. ${esc(p.notes || "")}</p>` : "") +
+            `<div class="summary-row">${badge}${bits.join("")}</div>` +
+            (p.names_synthetic
+              ? `<div class="notice">⚠ Decompiled ABI — function and parameter names are inferred, not ground truth. ${esc(p.notes || "")}</div>`
+              : "") +
             renderInspect(data) +
-            `<div class="method-tools"><div class="field" data-label="method filter"><input id="method-filter" placeholder="balance, transfer, owner, uint256…" autocomplete="off" spellcheck="false" /></div></div>` +
+            `<div class="filter-row"><div class="field"><label for="method-filter">Filter methods</label><input id="method-filter" placeholder="balance, transfer, owner, uint256…" autocomplete="off" spellcheck="false" /></div></div>` +
             `<div class="fns" id="fn-grid"></div>`;
           renderFns(data);
           let filterTimer = 0;
@@ -432,6 +809,7 @@ const tx = await g.prepareTx("base", addr, "transfer",
       loadChains();
       $("go").onclick = resolve;
       $("addr").addEventListener("keydown", (e) => { if (e.key === "Enter") resolve(); });
+      $("rpc-url").addEventListener("keydown", (e) => { if (e.key === "Enter") resolve(); });
     </script>
   </body>
 </html>
