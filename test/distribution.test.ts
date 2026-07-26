@@ -95,7 +95,9 @@ describe("distribution metadata", () => {
     expect(site).toContain("include_abi=false");
     expect(site).toContain('id="rpc-url"');
     expect(site).toContain("monad-testnet");
-    expect(site).toContain("WETH (monad testnet)");
+    // The site must ship a monad-testnet example, but don't pin the chip's
+    // display copy: assert the contract it points at instead.
+    expect(site).toContain("0x45477f4709771331db81944A5E20eF95Bc7BA2D7");
     expect(site).toContain('params.set("rpc_url", rpcUrl)');
     expect(site).toContain("/v1/chains?has_default_rpc=true");
     expect(site).not.toContain("/v1/chains?testnets=false&has_default_rpc=true");

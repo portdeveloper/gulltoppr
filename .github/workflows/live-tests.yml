@@ -18,12 +18,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  live:
+  # Audits run as their own job: a newly published advisory says nothing about
+  # whether the contract ladder still works, and when it gated the live job it
+  # failed the whole run daily while `test:live` never even executed.
+  audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -33,7 +36,25 @@ jobs:
       - run: npm ci
       - run: npm ci
         working-directory: sdk
-      - run: npm run verify
+      - run: npm run audit
+      - run: npm run audit:sdk
+
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            sdk/package-lock.json
+      - run: npm ci
+      - run: npm ci
+        working-directory: sdk
+      - run: npm run verify -- --skip-audit
       - run: npm run test:live
         env:
           LIVE_ENGINE_BASE_URL: ${{ inputs.live_engine_base_url }}
