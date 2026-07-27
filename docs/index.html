@@ -124,6 +124,21 @@
         content: ""; width: 7px; height: 7px; border-radius: 50%;
         background: var(--acc); box-shadow: 0 0 0 3px rgba(79, 217, 139, .16);
       }
+      .offline {
+        display: none; margin: 0; padding: 14px 16px;
+        border-bottom: 1px solid #4b3d15; background: #16130a; color: var(--warn);
+        font-size: 13.5px; line-height: 1.6;
+      }
+      .offline.on { display: block; }
+      .offline b { color: #f3d99a; }
+      .offline code {
+        background: rgba(0,0,0,.35); border: 1px solid #4b3d15;
+        border-radius: 5px; padding: 1px 5px; font-size: 12.5px; color: #f3d99a;
+      }
+      .offline a { color: var(--acc); }
+      .offline a:hover { text-decoration: underline; }
+      .console.paused .live { color: var(--warn); }
+      .console.paused .live::before { background: var(--warn); box-shadow: 0 0 0 3px rgba(232,183,87,.16); }
       .form { padding: 20px 16px; }
       .fields { display: grid; grid-template-columns: 200px minmax(0, 1fr) auto; gap: 14px; align-items: end; }
       .field { min-width: 0; }
@@ -151,6 +166,11 @@
       }
       button.go:hover:not(:disabled) { background: #63e79a; }
       button.go:disabled { opacity: .55; cursor: progress; }
+      /* paused ≠ pending: don't leave a bright green CTA on a dead button */
+      .console.paused button.go:disabled {
+        background: var(--surface-2); color: var(--dim);
+        border-color: var(--line-2); opacity: 1; cursor: default;
+      }
 
       .advanced { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 14px; }
       .advanced > summary {
@@ -365,8 +385,9 @@
           <div class="kicker">Playground</div>
           <h2>Resolve any contract, right now</h2>
           <p>
-            Runs against the live engine at <code>api.gulltoppr.dev</code> from your browser — no key, no signup.
+            Runs against the engine at <code>api.gulltoppr.dev</code> from your browser — no key, no signup.
             Paste an unverified address: it still resolves, and tells you the ABI was decompiled.
+            The hosted engine is currently paused; run it yourself and this all works locally.
           </p>
         </div>
 
@@ -374,8 +395,10 @@
           <div class="console-bar">
             <span class="lights"><i></i><i></i><i></i></span>
             <span class="verb">GET /v1/{chain}/{address}/abi</span>
-            <span class="live">live engine</span>
+            <span class="live" id="live-pill">live engine</span>
           </div>
+
+          <div class="offline" id="offline-note"></div>
 
           <div class="form">
             <div class="fields">
@@ -497,7 +520,8 @@
   }
 }</pre>
           </div>
-          <p class="undercode">Drop it into Claude Code, Claude Desktop, Cursor, or any MCP client. Wallet, explorer, and coding-agent recipes live in <a href="integrations.md">the integration guide</a>.</p>
+          <p class="undercode">Drop it into Claude Code, Claude Desktop, Cursor, or any MCP client. Wallet, explorer, and coding-agent recipes live in <a href="integrations.md">the integration guide</a>.<br />
+            <b>The hosted endpoint is paused right now</b> — run the same server locally with <code>npm run mcp</code> (stdio) or <code>npm run mcp:http</code>, pointing <code>ENGINE_URL</code> at your own engine.</p>
         </div>
 
         <div class="panel-body" id="p-sdk" role="tabpanel" aria-labelledby="tab-sdk" hidden>
@@ -601,6 +625,44 @@
           setTimeout(() => { btn.textContent = "Copy"; }, 1400);
         };
       });
+
+      // The hosted engine is paused to keep hosting costs down, so say so plainly
+      // instead of letting every Resolve click fail with a raw network error.
+      const OFFLINE_HTML =
+        `<b>The hosted engine is paused.</b> <code>api.gulltoppr.dev</code> and ` +
+        `<code>mcp.gulltoppr.dev</code> are switched off for now to keep hosting costs down — ` +
+        `so this playground can't resolve anything. Nothing about the project is gone: ` +
+        `run the engine yourself with <code>git clone</code> + <code>npm start</code>, the MCP server ` +
+        `with <code>npm run mcp</code>, or just use the SDK (<code>npm i gulltoppr</code>) against your own RPC. ` +
+        `<a href="https://github.com/portdeveloper/gulltoppr">Setup is in the README</a>.`;
+
+      let engineOffline = false;
+      function markEngineOffline() {
+        if (engineOffline) return;
+        engineOffline = true;
+        const note = $("offline-note");
+        note.innerHTML = OFFLINE_HTML;
+        note.classList.add("on");
+        $("live-pill").textContent = "engine paused";
+        document.querySelector(".console").classList.add("paused");
+        $("go").disabled = true;
+        $("go").textContent = "Engine paused";
+        $("out").innerHTML = "";
+        document.querySelectorAll(".chip").forEach((c) => {
+          c.disabled = true;
+          c.style.opacity = ".5";
+          c.style.cursor = "default";
+        });
+      }
+
+      async function probeEngine() {
+        try {
+          const res = await fetch(`${API}/health`, { signal: AbortSignal.timeout(8000) });
+          if (!res.ok) markEngineOffline();
+        } catch {
+          markEngineOffline();
+        }
+      }
 
       async function loadChains() {
         try {
@@ -737,6 +799,7 @@
       }
 
       async function resolve() {
+        if (engineOffline) { markEngineOffline(); return; }
         const chain = $("chain").value;
         const addr = $("addr").value.trim();
         const rpcUrl = $("rpc-url").value.trim();
@@ -801,11 +864,15 @@
             }, 250);
           });
         } catch (e) {
-          out.innerHTML = `<p class='err'>${esc(e.message)}</p>`;
+          // A failed fetch here means the hosted engine is unreachable, not that
+          // the address was bad — show the offline explanation rather than "Failed to fetch".
+          markEngineOffline();
+          out.innerHTML = "";
         } finally {
-          $("go").disabled = false;
+          if (!engineOffline) $("go").disabled = false;
         }
       }
+      probeEngine();
       loadChains();
       $("go").onclick = resolve;
       $("addr").addEventListener("keydown", (e) => { if (e.key === "Enter") resolve(); });
