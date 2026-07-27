@@ -39,7 +39,7 @@ GitHub Action runs the local path; manual dispatch can set the same deployed URL
 | var | default | notes |
 |-----|---------|-------|
 | `PORT` | `8787` | |
-| `HEIMDALL_API_URL` | `https://heimdall-api.fly.dev` | heimdall decompile service (ladder rung 4) |
+| `HEIMDALL_API_URL` | `http://heimdall-api.flycast` | heimdall decompile service (ladder rung 4). Private to the Fly org since 2026-07-27 — point this at your own instance when running outside it, or rung 4 falls back to selector-only via 4byte |
 | `HEIMDALL_CONCURRENCY` | `2` | per-process cap on outbound decompile/decode requests; `0` disables |
 | `HEIMDALL_QUEUE_TIMEOUT_MS` | `5000` | max time a gulltoppr request can wait for an outbound concurrency slot |
 | `ENS_RPC_URL` | `https://ethereum-rpc.publicnode.com` | mainnet RPC for ENS/Basenames Universal Resolver calls; use a private RPC in production |

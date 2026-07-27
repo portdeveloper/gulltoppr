@@ -17,8 +17,13 @@ function envNumber(key: string, fallback: number): number {
 export const config = {
   port: envNumber("PORT", 8787),
 
-  /** gulltoppr — the heimdall decompile service (ladder rung 4). Already deployed. */
-  heimdallApiUrl: envString("HEIMDALL_API_URL", "https://heimdall-api.fly.dev"),
+  /** The heimdall decompile service (ladder rung 4).
+   *
+   * Private as of 2026-07-27: it has no public IPs and is only reachable over
+   * Flycast from inside the Fly org, so the default only resolves for the deployed
+   * engine. Anything running elsewhere (local dev, CI) must point this at its own
+   * heimdall-api instance, or rung 4 degrades to selector-only via 4byte. */
+  heimdallApiUrl: envString("HEIMDALL_API_URL", "http://heimdall-api.flycast"),
 
   /** The deployed REST engine. The MCP server thin-clients this (shares its cache +
    * Etherscan key) instead of resolving in-process. */
