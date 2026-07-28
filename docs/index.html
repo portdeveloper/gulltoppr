@@ -653,13 +653,16 @@
         });
       }
 
-      async function probeEngine() {
-        try {
-          const res = await fetch(`${API}/health`, { signal: AbortSignal.timeout(8000) });
-          if (!res.ok) markEngineOffline();
-        } catch {
-          markEngineOffline();
-        }
+      // Nothing here touches the API until the visitor shows intent. The engine
+      // scales to zero, and any request — even /health or the chain catalog —
+      // autostarts it for the length of Fly's idle window, so probing on load
+      // would let idle browsers bill the machine. Someone who only reads the page
+      // costs nothing; the offline notice appears on the first failed resolve.
+      let chainsRequested = false;
+      function ensureChains() {
+        if (chainsRequested) return;
+        chainsRequested = true;
+        loadChains();
       }
 
       async function loadChains() {
@@ -798,6 +801,7 @@
 
       async function resolve() {
         if (engineOffline) { markEngineOffline(); return; }
+        ensureChains(); // example chips resolve without ever focusing a field
         const chain = $("chain").value;
         const addr = $("addr").value.trim();
         const rpcUrl = $("rpc-url").value.trim();
@@ -870,8 +874,10 @@
           if (!engineOffline) $("go").disabled = false;
         }
       }
-      probeEngine();
-      loadChains();
+      // First sign of intent — focusing a field or opening the chain list — is when
+      // we fetch the live chain catalog. Until then the static <datalist> serves.
+      $("chain").addEventListener("focus", ensureChains, { once: true });
+      $("addr").addEventListener("focus", ensureChains, { once: true });
       $("go").onclick = resolve;
       $("addr").addEventListener("keydown", (e) => { if (e.key === "Enter") resolve(); });
       $("rpc-url").addEventListener("keydown", (e) => { if (e.key === "Enter") resolve(); });
