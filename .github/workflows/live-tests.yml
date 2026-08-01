@@ -57,7 +57,11 @@ jobs:
       - run: npm run verify -- --skip-audit
       - run: npm run test:live
         env:
-          LIVE_ENGINE_BASE_URL: ${{ inputs.live_engine_base_url }}
+          # Default to the deployed engine: heimdall-api is Flycast-private, so a
+          # checkout-local engine has no rung 4 and those tests skip. Prod reaches
+          # heimdall over the private network, restoring real decompile coverage.
+          # A workflow_dispatch input still overrides for smoking other deploys.
+          LIVE_ENGINE_BASE_URL: ${{ inputs.live_engine_base_url || 'https://api.gulltoppr.dev' }}
           ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
           HEIMDALL_API_URL: ${{ vars.HEIMDALL_API_URL }}
           SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL }}
